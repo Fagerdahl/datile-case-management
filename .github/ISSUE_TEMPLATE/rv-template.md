@@ -7,12 +7,14 @@ assignees: ''
 
 ---
 
-**User story**
+# Titel
+
+### User story
 A clear and concise description of what the problem is.
 
-**Tasks**
+### Tasks
 - [ ] A clear and concise description of what you want to happen.
 - [ ] A clear and concise description of what you want to happen.
 - [ ] A clear and concise description of what you want to happen.
 
-**Additional content (images, docs mm)**
+### Additional content (images, docs etc)
