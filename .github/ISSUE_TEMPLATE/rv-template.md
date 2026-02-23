@@ -7,14 +7,16 @@ assignees: ''
 
 ---
 
-# Titel
+# 0.0 Titel
 
 ### User story
 A clear and concise description of what the problem is.
 
-### Tasks
+## Tasks
+### Frontend
 - [ ] A clear and concise description of what you want to happen.
-- [ ] A clear and concise description of what you want to happen.
+
+### Backend
 - [ ] A clear and concise description of what you want to happen.
 
 ### Additional content (images, docs etc)
