@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: datile-it
+
+  profiles:
+    default: dev
+
+  flyway:
+    enabled: ${SPRING_FLYWAY_ENABLED:true}
