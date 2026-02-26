@@ -31,7 +31,6 @@ Returns a list of errands
 }
 ```
 ___
-
 ### GET ``/api/errands/{id}``
 Returns a single errand.
 ###### Response - (200 OK)
@@ -71,7 +70,6 @@ Returns a single errand.
 }
 ```
 ___
-
 ### POST ``/api/errands``
 Creates a new errand
 ###### Request body
@@ -153,7 +151,6 @@ Creates a new errand
 }
 ```
 ___
-
 ### PUT ``/api/errands/{id}``
 Updates an errand
 ###### Request body
@@ -205,7 +202,6 @@ Updates an errand
 }
 ```
 ___
-
 ## Customers
 ### GET ``/api/customers``
 Returns a list of customers and their respective contacts
@@ -238,6 +234,22 @@ Creates a new customer
   "fortnox_id": "00001"
 }
 ```
+###
+###### Response - (201 Created)
+```json
+{
+  "customer": "John Doe AB",
+  "fortnox_id": "00001"
+}
+```
+###
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Required fields missing or invalid"
+}
+```
 ___
 ### POST ``/api/customers/{id}/contacts``
 Creates a new contact for a customer
@@ -250,6 +262,23 @@ Creates a new contact for a customer
   "mail": "janedoe@gmail.com"
 }
 ```
+###
+###### Response - (201 Created)
+```json
+{
+  "first_name": "Jane",
+  "last_name": "Doe",
+  "phone_number": "0701234567",
+  "mail": "janedoe@gmail.com"
+}
+```
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Required fields missing or invalid"
+}
+```
 ___ 
 ### PUT ``/api/customers/{id}``
 Updates a customer
@@ -257,6 +286,22 @@ Updates a customer
 ```json
 {
   "customer": "John Doen't AB"
+}
+```
+###
+###### Response - (200 OK)
+```json
+{
+  "status": "200 OK",
+  "message": "Customer with id {id} updated successfully"
+}
+```
+###
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Required fields missing or invalid"
 }
 ```
 ___
@@ -269,5 +314,21 @@ Updates a contact for a customer
   "last_name": "Doen't",
   "phone_number": "0701234567",
   "mail": "janedoent@gmail.com"
+}
+```
+###
+###### Response - (200 OK)
+```json
+{
+  "status": "200 OK",
+  "message": "Contact belonging to customer with id {id} updated successfully"
+}
+```
+###
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Required fields missing or invalid"
 }
 ```
