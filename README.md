@@ -4,7 +4,7 @@ ___
 
 # API Documentation
 ## Errands
-### __GET__ ``/api/errands``
+### GET ``/api/errands``
 Returns a list of errands
 ###### Response - (200 OK)
 ```json
@@ -14,7 +14,7 @@ Returns a list of errands
           "errand_id": "1",
           "date_created": "2026-02-24",
           "title": "Test errand",
-          "assignee": "Jimmy",
+          "assignee": "Tom",
           "customer": "John Doe AB",
           "contact": "John",
           "phone_number": "0701234567",
@@ -22,7 +22,7 @@ Returns a list of errands
           "history": [
             {
               "description": "I did a thing",
-              "verified_name": "Jimmy",
+              "verified_name": "Tom",
               "created_at": "2026-02-25T12:00:00"
             }
           ]
@@ -40,7 +40,7 @@ Returns a single errand.
   "errand_id": "1",
   "date_created": "2026-02-25",
   "title": "Test errand",
-  "assignee": "Jimmy",
+  "assignee": "Tom",
   "customer": "John Doe AB",
   "contact": "John",
   "phone_number": "0701234567",
@@ -48,7 +48,7 @@ Returns a single errand.
   "history": [
     {
       "description": "I did a thing",
-      "verified_name": "Jimmy",
+      "verified_name": "Tom",
       "created_at": "2026-02-25T12:00:00"
     }
   ],
@@ -78,7 +78,7 @@ Creates a new errand
 ```json
 {
   "title": "Test errand",
-  "assignee": "Jimmy",
+  "assignee": "Tom",
   "customer": "John Doe AB",
   "contact": "John",
   "phone_number": "0701234567",
@@ -86,7 +86,7 @@ Creates a new errand
   "history": [
     {
       "description": "I created the errand",
-      "verified_name": "Jimmy",
+      "verified_name": "Tom",
       "created_at": "2026-02-25T12:00:00"
     }
   ],
@@ -114,7 +114,7 @@ Creates a new errand
   "errand_id": "1",
   "date_created": "2026-02-25",
   "title": "Test errand",
-  "assignee": "Jimmy",
+  "assignee": "Tom",
   "customer": "John Doe AB",
   "contact": "John",
   "phone_number": "0701234567",
@@ -122,7 +122,7 @@ Creates a new errand
   "history": [
     {
       "description": "I created the errand",
-      "verified_name": "Jimmy",
+      "verified_name": "Tom",
       "created_at": "2026-02-25T12:00:00"
     }
   ],
@@ -161,7 +161,7 @@ Updates an errand
 {
   "date_created": "2026-02-25",
   "title": "Test errand",
-  "assignee": "Jimmy",
+  "assignee": "Tom",
   "customer": "John Doe AB",
   "contact": "John",
   "phone_number": "0701234567",
@@ -169,12 +169,12 @@ Updates an errand
   "history": [
     {
       "description": "I created the errand",
-      "verified_name": "Jimmy",
+      "verified_name": "Tom",
       "created_at": "2026-02-25T12:00:00"
     },
     {
       "description": "I did a thing",
-      "verified_name": "Jimmy",
+      "verified_name": "Tom",
       "created_at": "2026-02-27T13:26:00"
     }
   ],
@@ -205,3 +205,69 @@ Updates an errand
 }
 ```
 ___
+
+## Customers
+### GET ``/api/customers``
+Returns a list of customers and their respective contacts
+###### Response - (200 OK)
+```json
+{
+  "customers": [
+    {
+      "customer": "Hultelid",
+      "fortnox_id": "00000",
+      "contacts": [
+        {
+          "first_name": "John",
+          "last_name": "Doe",
+          "phone_number": "0701234567",
+          "mail": "johndoe@gmail.com"
+        }
+      ]
+    }
+  ]
+}
+```
+___
+### POST ``/api/customers``
+Creates a new customer
+###### Request body
+```json
+{
+  "customer": "John Doe AB",
+  "fortnox_id": "00001"
+}
+```
+___
+### POST ``/api/customers/{id}/contacts``
+Creates a new contact for a customer
+###### Request body
+```json
+{
+  "first_name": "Jane",
+  "last_name": "Doe",
+  "phone_number": "0701234567",
+  "mail": "janedoe@gmail.com"
+}
+```
+___ 
+### PUT ``/api/customers/{id}``
+Updates a customer
+###### Request body
+```json
+{
+  "customer": "John Doen't AB"
+}
+```
+___
+### PUT ``/api/customers/{id}/contacts/{contact_id}``
+Updates a contact for a customer
+###### Request body
+```json
+{
+  "first_name": "Jane",
+  "last_name": "Doen't",
+  "phone_number": "0701234567",
+  "mail": "janedoent@gmail.com"
+}
+```
