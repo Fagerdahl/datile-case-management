@@ -49,8 +49,8 @@ jobs:
       - name: Run tests
         env:
           SPRING_PROFILES_ACTIVE: test
-          SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/datile?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/datile?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
           SPRING_DATASOURCE_USERNAME: app
           SPRING_DATASOURCE_PASSWORD: app_pw
           SPRING_FLYWAY_ENABLED: "true"
-        run: ./mvnw test
+        run: ./mvnw -e test
