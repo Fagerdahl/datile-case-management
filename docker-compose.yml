@@ -1,21 +1,25 @@
 services:
-  mysql:
+  db:
     image: mysql:8.0.36
     container_name: datile-mysql
-    environment:
-      MYSQL_DATABASE: datile
-      MYSQL_USER: app
-      MYSQL_PASSWORD: app_pw
-      MYSQL_ROOT_PASSWORD: root_pw
+    restart: unless-stopped
+
+
+    env_file:
+      - .env
+
     ports:
       - "3306:3306"
+
     volumes:
       - mysql_data:/var/lib/mysql
+
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-proot_pw" ]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -p$${MYSQL_ROOT_PASSWORD} --silent"]
       interval: 5s
       timeout: 3s
       retries: 20
+      start_period: 10s
 
 volumes:
   mysql_data:

@@ -39,5 +39,6 @@ class DatabaseIntegrationTest {
                 Integer.class
         );
         assertThat(count).isNotNull();
+        assertThat(count).isGreaterThanOrEqualTo(1);
     }
 }
