@@ -4,9 +4,21 @@ ___
 
 # API Documentation
 ## Errands
-
 ### GET ``/api/errands``
-Returns a list of errands
+Returns a filtered and sorted list of errands
+
+###### Query parameters (optional)
+- ``search`` – Text filter using contains (matches title and description)
+- ``customer_id`` – Filter by customer
+- ``assignee_id`` – Filter by assignee
+- ``status_ids`` – Comma separated list of status ids
+- ``priority_ids`` – Comma separated list of priority ids
+- ``sort_by`` – Field to sort by (date_created, customer, title, category, status, priority, timescale, assignee)
+
+###### Example request
+```
+/api/errands?search=server&status_ids=1,2&priority_ids=2,5&sort_by=date_created
+```
 
 ###### Response - (200 OK)
 ```json
@@ -15,27 +27,36 @@ Returns a list of errands
     {
       "errand_id": "1",
       "date_created": "2026-02-24",
-      "title": "Test errand",
+      "title": "Server installation",
+      "category": "Infrastructure",
+      "timescale": 1.0,
       "assignee": {
         "assignee_id": "5",
-        "name": "Tom"
+        "name": "Viktor"
       },
       "customer": {
         "customer_id": "3",
-        "name": "John Doe AB"
+        "name": "AJ Tryckluft"
       },
-      "contact": "John",
-      "phone_number": "0701234567",
-      "mail": "johndoe@gmail.com",
-      "history": [
-        {
-          "description": "I did a thing",
-          "verified_name": "Tom",
-          "created_at": "2026-02-25T12:00:00"
-        }
-      ]
+      "status": {
+        "status_id": "1",
+        "name": "New"
+      },
+      "priority": {
+        "priority_id": "2",
+        "name": "High",
+        "color": "#FF8800"
+      }
     }
   ]
+}
+```
+###
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Invalid filter or sorting parameters"
 }
 ```
 ___
@@ -408,6 +429,43 @@ Updates a customer
 }
 ```
 ___
+### PATCH ``/api/customers/{id}``
+Updates the active status of a customer
+
+###### Request body
+```json
+{
+  "active": false
+}
+```
+
+###
+###### Response - (200 OK)
+```json
+{
+  "status": "200 OK",
+  "message": "Customer with id {id} updated successfully"
+}
+```
+
+###
+###### Response - (404 Not Found)
+```json
+{
+  "status": "Not found",
+  "message": "Customer with id {id} not found"
+}
+```
+
+###
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Invalid active value"
+}
+```
+___
 ### PUT ``/api/customers/{id}/contacts/{contact_id}``
 Updates a contact for a customer
 ###### Request body
@@ -433,6 +491,27 @@ Updates a contact for a customer
 {
   "status": "Bad request",
   "message": "Required fields missing or invalid"
+}
+```
+___
+### DELETE ``/api/customers/{id}/contacts/{contact_id}``
+Deletes a contact belonging to a customer
+
+###
+###### Response - (200 OK)
+```json
+{
+  "status": "200 OK",
+  "message": "Contact belonging to customer with id {id} deleted successfully"
+}
+```
+
+###
+###### Response - (404 Not Found)
+```json
+{
+  "status": "Not found",
+  "message": "Contact with id {contact_id} not found"
 }
 ```
 ## Users
@@ -502,6 +581,25 @@ Creates a new user
 {
   "status": "Bad request",
   "message": "Required fields missing or invalid"
+}
+```
+___
+### DELETE ``/api/users/{id}``
+Deletes a user
+###### Response - (200 OK)
+```json
+{
+  "status": "200 OK",
+  "message": "User with id {id} deleted successfully"
+}
+```
+
+###
+###### Response - (404 Not Found)
+```json
+{
+  "status": "Not found",
+  "message": "User with id {id} not found"
 }
 ```
 ___
@@ -616,6 +714,25 @@ Updates an assignee
 }
 ```
 ___
+### DELETE ``/api/assignees/{id}``
+Deletes an assignee
+###### Response - (200 OK)
+```json
+{
+  "status": "200 OK",
+  "message": "Assignee with id {id} deleted successfully"
+}
+```
+
+###
+###### Response - (404 Not Found)
+```json
+{
+  "status": "Not found",
+  "message": "Assignee with id {id} not found"
+}
+```
+___
 ## Status
 ### GET ``/api/statuses``
 Returns a list of all statuses in the system
@@ -691,7 +808,25 @@ Updates a status
   "message": "Required fields missing or invalid"
 }
 ```
+___
+### DELETE ``/api/statuses/{id}``
+Deletes a status
+###### Response - (200 OK)
+```json
+{
+  "status": "200 OK",
+  "message": "Status with id {id} deleted successfully"
+}
+```
 
+###
+###### Response - (404 Not Found)
+```json
+{
+  "status": "Not found",
+  "message": "Status with id {id} not found"
+}
+```
 ___
 
 ## Priorities
@@ -778,5 +913,24 @@ Updates a priority
 {
   "status": "Bad request",
   "message": "Required fields missing or invalid"
+}
+```
+___
+### DELETE ``/api/priorities/{id}``
+Deletes a priority
+###### Response - (200 OK)
+```json
+{
+  "status": "200 OK",
+  "message": "Priority with id {id} deleted successfully"
+}
+```
+
+###
+###### Response - (404 Not Found)
+```json
+{
+  "status": "Not found",
+  "message": "Priority with id {id} not found"
 }
 ```
