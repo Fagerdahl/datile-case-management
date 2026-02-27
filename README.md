@@ -4,43 +4,58 @@ ___
 
 # API Documentation
 ## Errands
+
 ### GET ``/api/errands``
 Returns a list of errands
+
 ###### Response - (200 OK)
 ```json
 {
   "errands": [
+    {
+      "errand_id": "1",
+      "date_created": "2026-02-24",
+      "title": "Test errand",
+      "assignee": {
+        "assignee_id": "5",
+        "name": "Tom"
+      },
+      "customer": {
+        "customer_id": "3",
+        "name": "John Doe AB"
+      },
+      "contact": "John",
+      "phone_number": "0701234567",
+      "mail": "johndoe@gmail.com",
+      "history": [
         {
-          "errand_id": "1",
-          "date_created": "2026-02-24",
-          "title": "Test errand",
-          "assignee": "Tom",
-          "customer": "John Doe AB",
-          "contact": "John",
-          "phone_number": "0701234567",
-          "mail": "johndoe@gmail.com",
-          "history": [
-            {
-              "description": "I did a thing",
-              "verified_name": "Tom",
-              "created_at": "2026-02-25T12:00:00"
-            }
-          ]
+          "description": "I did a thing",
+          "verified_name": "Tom",
+          "created_at": "2026-02-25T12:00:00"
         }
       ]
+    }
+  ]
 }
 ```
 ___
 ### GET ``/api/errands/{id}``
-Returns a single errand.
+Returns a single errand
+
 ###### Response - (200 OK)
 ```json
 {
   "errand_id": "1",
   "date_created": "2026-02-25",
   "title": "Test errand",
-  "assignee": "Tom",
-  "customer": "John Doe AB",
+  "assignee": {
+    "assignee_id": "5",
+    "name": "Tom"
+  },
+  "customer": {
+    "customer_id": "3",
+    "name": "John Doe AB"
+  },
   "contact": "John",
   "phone_number": "0701234567",
   "mail": "johndoe@gmail.com",
@@ -53,12 +68,19 @@ Returns a single errand.
   ],
   "description": "Johns errand description",
   "timescale": 1,
-  "status": "New",
-  "priority": "HIGH",
+  "status": {
+    "status_id": "1",
+    "name": "New"
+  },
+  "priority": {
+    "priority_id": "2",
+    "name": "High",
+    "color": "#FF8800"
+  },
   "purchases": [
     {
       "purchase_id": "1",
-      "purchase": "computer",
+      "purchase": "Computer",
       "purchase_date": "2026-02-25",
       "price": 250,
       "shipping": 50,
@@ -67,34 +89,37 @@ Returns a single errand.
     }
   ],
   "agreed_price": 150
+}
+```
+
+###
+###### Response - (404 Not Found)
+```json
+{
+  "status": "Not found",
+  "message": "Errand with id {id} not found"
 }
 ```
 ___
 ### POST ``/api/errands``
 Creates a new errand
+
 ###### Request body
 ```json
 {
   "title": "Test errand",
-  "assignee": "Tom",
-  "customer": "John Doe AB",
+  "assignee_id": "5",
+  "customer_id": "3",
   "contact": "John",
   "phone_number": "0701234567",
   "mail": "johndoe@gmail.com",
-  "history": [
-    {
-      "description": "I created the errand",
-      "verified_name": "Tom",
-      "created_at": "2026-02-25T12:00:00"
-    }
-  ],
   "description": "Johns errand description",
   "timescale": 1,
-  "status": "New",
-  "priority": "HIGH",
+  "status_id": "1",
+  "priority_id": "2",
   "purchases": [
     {
-      "purchase": "computer",
+      "purchase": "Computer",
       "purchase_date": "2026-02-25",
       "price": 250,
       "shipping": 50,
@@ -105,6 +130,7 @@ Creates a new errand
   "agreed_price": 150
 }
 ```
+
 ###
 ###### Response – (201 Created)
 ```json
@@ -112,26 +138,32 @@ Creates a new errand
   "errand_id": "1",
   "date_created": "2026-02-25",
   "title": "Test errand",
-  "assignee": "Tom",
-  "customer": "John Doe AB",
+  "assignee": {
+    "assignee_id": "5",
+    "name": "Tom"
+  },
+  "customer": {
+    "customer_id": "3",
+    "name": "John Doe AB"
+  },
   "contact": "John",
   "phone_number": "0701234567",
   "mail": "johndoe@gmail.com",
-  "history": [
-    {
-      "description": "I created the errand",
-      "verified_name": "Tom",
-      "created_at": "2026-02-25T12:00:00"
-    }
-  ],
   "description": "Johns errand description",
   "timescale": 1,
-  "status": "New",
-  "priority": "HIGH",
+  "status": {
+    "status_id": "1",
+    "name": "New"
+  },
+  "priority": {
+    "priority_id": "2",
+    "name": "High",
+    "color": "#FF8800"
+  },
   "purchases": [
     {
       "purchase_id": "1",
-      "purchase": "computer",
+      "purchase": "Computer",
       "purchase_date": "2026-02-25",
       "price": 250,
       "shipping": 50,
@@ -142,6 +174,7 @@ Creates a new errand
   "agreed_price": 150
 }
 ```
+
 ###
 ###### Response - (400 Bad Request)
 ```json
@@ -153,36 +186,24 @@ Creates a new errand
 ___
 ### PUT ``/api/errands/{id}``
 Updates an errand
+
 ###### Request body
 ```json
 {
-  "date_created": "2026-02-25",
   "title": "Test errand",
-  "assignee": "Tom",
-  "customer": "John Doe AB",
+  "assignee_id": "5",
+  "customer_id": "3",
   "contact": "John",
   "phone_number": "0701234567",
   "mail": "johndoe@gmail.com",
-  "history": [
-    {
-      "description": "I created the errand",
-      "verified_name": "Tom",
-      "created_at": "2026-02-25T12:00:00"
-    },
-    {
-      "description": "I did a thing",
-      "verified_name": "Tom",
-      "created_at": "2026-02-27T13:26:00"
-    }
-  ],
   "description": "Johns errand description",
   "timescale": 1,
-  "status": "New",
-  "priority": "HIGH",
+  "status_id": "1",
+  "priority_id": "2",
   "purchases": [
     {
       "purchase_id": "1",
-      "purchase": "computer",
+      "purchase": "Computer",
       "purchase_date": "2026-02-25",
       "price": 250,
       "shipping": 50,
@@ -193,12 +214,94 @@ Updates an errand
   "agreed_price": 150
 }
 ```
+
 ###
 ###### Response - (200 OK)
 ```json
 {
   "status": "200 OK",
   "message": "Errand with id {id} updated successfully"
+}
+```
+
+###
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Required fields missing or invalid"
+}
+```
+___
+## Reports
+
+### GET ``/api/reports``
+Returns a filtered list of errands for export
+
+###### Query parameters (optional)
+- ``search`` – Filter by title or description
+- ``date_from`` – Filter errands created from this date (YYYY-MM-DD)
+- ``date_to`` – Filter errands created to this date (YYYY-MM-DD)
+- ``customer_id`` – Filter by customer
+- ``assignee_id`` – Filter by assignee
+- ``status_ids`` – Comma separated list of status ids
+- ``priority_ids`` – Comma separated list of priority ids
+
+###### Example request
+```
+/api/reports?date_from=2026-02-01&date_to=2026-02-28&status_ids=1,2&priority_ids=3
+```
+
+###### Response - (200 OK)
+```json
+{
+  "reports": [
+    {
+      "errand_id": "1",
+      "customer": {
+        "customer_id": "3",
+        "name": "AJ Tryckluft"
+      },
+      "contact": "Jonas",
+      "category": "Datavirus",
+      "status": {
+        "status_id": "1",
+        "name": "New"
+      },
+      "priority": {
+        "priority_id": "2",
+        "name": "High",
+        "color": "#FF8800"
+      },
+      "time_spent": 1.0,
+      "assignee": {
+        "assignee_id": "5",
+        "name": "Viktor"
+      },
+      "purchases": [
+        {
+          "purchase_id": "1",
+          "purchase": "Computer",
+          "purchase_date": "2026-02-25",
+          "price": 250,
+          "shipping": 50,
+          "outprice": 400,
+          "comment": "..."
+        }
+      ],
+      "total_purchase_cost": 300,
+      "total_outprice": 400
+    }
+  ]
+}
+```
+
+###
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Invalid filter parameters"
 }
 ```
 ___
@@ -324,6 +427,351 @@ Updates a contact for a customer
   "message": "Contact belonging to customer with id {id} updated successfully"
 }
 ```
+###
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Required fields missing or invalid"
+}
+```
+## Users
+
+### GET ``/api/users``
+Returns a list of users and their respective permissions
+
+###### Response - (200 OK)
+```json
+{
+  "users": [
+    {
+      "user_id": "1",
+      "username": "Tom",
+      "permissions": {
+        "create_errand": true,
+        "create_report": true,
+        "customers": true,
+        "purchases": true,
+        "users": true,
+        "settings": true
+      }
+    }
+  ]
+}
+```
+___
+### POST ``/api/users``
+Creates a new user
+
+###### Request body
+```json
+{
+  "username": "Daniel",
+  "password": "securePassword123",
+  "permissions": {
+    "create_errand": true,
+    "create_report": false,
+    "customers": true,
+    "purchases": false,
+    "users": false,
+    "settings": false
+  }
+}
+```
+
+###
+###### Response - (201 Created)
+```json
+{
+  "user_id": "10",
+  "username": "Daniel",
+  "permissions": {
+    "create_errand": true,
+    "create_report": false,
+    "customers": true,
+    "purchases": false,
+    "users": false,
+    "settings": false
+  }
+}
+```
+
+###
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Required fields missing or invalid"
+}
+```
+___
+### PUT ``/api/users/{id}``
+Updates a user
+
+###### Request body
+```json
+{
+  "username": "Daniel",
+  "permissions": {
+    "create_errand": true,
+    "create_report": true,
+    "customers": true,
+    "purchases": true,
+    "users": false,
+    "settings": false
+  }
+}
+```
+
+###
+###### Response - (200 OK)
+```json
+{
+  "status": "200 OK",
+  "message": "User with id {id} updated successfully"
+}
+```
+
+###
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Required fields missing or invalid"
+}
+```
+
+___
+
+## Assignees
+
+### GET ``/api/assignees``
+Returns a list of assignees
+
+###### Response - (200 OK)
+```json
+{
+  "assignees": [
+    {
+      "assignee_id": "1",
+      "name": "Tom"
+    }
+  ]
+}
+```
+___
+### POST ``/api/assignees``
+Creates a new assignee
+
+###### Request body
+```json
+{
+  "name": "Ronja"
+}
+```
+
+###
+###### Response - (201 Created)
+```json
+{
+  "assignee_id": "6",
+  "name": "Ronja"
+}
+```
+
+###
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Required fields missing or invalid"
+}
+```
+___
+### PUT ``/api/assignees/{id}``
+Updates an assignee
+
+###### Request body
+```json
+{
+  "name": "Ronja Julia"
+}
+```
+
+###
+###### Response - (200 OK)
+```json
+{
+  "status": "200 OK",
+  "message": "Assignee with id {id} updated successfully"
+}
+```
+
+###
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Required fields missing or invalid"
+}
+```
+___
+## Status
+### GET ``/api/statuses``
+Returns a list of all statuses in the system
+
+###### Response - (200 OK)
+```json
+{
+  "statuses": [
+    {
+      "status_id": "1",
+      "name": "New"
+    },
+    {
+      "status_id": "2",
+      "name": "In Progress"
+    }
+  ]
+}
+```
+___
+### POST ``/api/statuses``
+Creates a new status
+
+###### Request body
+```json
+{
+  "name": "Awaiting Approval"
+}
+```
+
+###
+###### Response - (201 Created)
+```json
+{
+  "status_id": "6",
+  "name": "Awaiting Approval"
+}
+```
+
+###
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Required fields missing or invalid"
+}
+```
+___
+### PUT ``/api/statuses/{id}``
+Updates a status
+
+###### Request body
+```json
+{
+  "name": "Awaiting Customer Response"
+}
+```
+
+###
+###### Response - (200 OK)
+```json
+{
+  "status": "200 OK",
+  "message": "Status with id {id} updated successfully"
+}
+```
+
+###
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Required fields missing or invalid"
+}
+```
+
+___
+
+## Priorities
+
+### GET ``/api/priorities``
+Returns a list of all priorities in the system
+
+###### Response - (200 OK)
+```json
+{
+  "priorities": [
+    {
+      "priority_id": "1",
+      "name": "PANIC HIGH",
+      "color": "#FF0000",
+      "default": false
+    },
+    {
+      "priority_id": "2",
+      "name": "High",
+      "color": "#FF8800",
+      "default": false
+    }
+  ]
+}
+```
+___
+### POST ``/api/priorities``
+Creates a new priority
+
+###### Request body
+```json
+{
+  "name": "Medium High",
+  "color": "#FFA500",
+  "default": false
+}
+```
+
+###
+###### Response - (201 Created)
+```json
+{
+  "priority_id": "6",
+  "name": "Medium High",
+  "color": "#FFA500",
+  "default": false
+}
+```
+
+###
+###### Response - (400 Bad Request)
+```json
+{
+  "status": "Bad request",
+  "message": "Required fields missing or invalid"
+}
+```
+___
+### PUT ``/api/priorities/{id}``
+Updates a priority
+
+###### Request body
+```json
+{
+  "name": "Low",
+  "color": "#29CC00",
+  "default": false
+}
+```
+
+###
+###### Response - (200 OK)
+```json
+{
+  "status": "200 OK",
+  "message": "Priority with id {id} updated successfully"
+}
+```
+
 ###
 ###### Response - (400 Bad Request)
 ```json
