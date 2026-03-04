@@ -40,7 +40,7 @@ export default function App() {
     }, []);
 
     return (
-        <div style={{ padding: 24, fontFamily: "system-ui" }}>
+        <div className="p-6 font-sans">
             <h1>Frontend smoke test</h1>
 
             <p>
