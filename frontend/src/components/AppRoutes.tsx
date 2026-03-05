@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { Errands, Reports, Customers, Users, Settings, PingPage } from "../pages";
 
-export function AppRoutes() {
+export default function AppRoutes() {
     return (
         <Routes>
             <Route path="/" element={<div>HELLO</div>} />
