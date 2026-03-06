@@ -1,5 +1,4 @@
 import type {ErrandListItem} from "../types/errands";
-import {useNavigate} from "react-router-dom";
 import {getPriorityStyles} from "../utils/priorityStyles";
 
 /* React component to show errands in the card view */
@@ -18,8 +17,13 @@ const formatDateTime = (iso: string) =>
 
 const safe = (v?: string | null) => (v && v.trim().length > 0 ? v : "—");
 
-export const ErrandCard = ({errand}: { errand: ErrandListItem }) => {
-    const navigate = useNavigate();
+export const ErrandCard = ({
+                               errand,
+                               onOpen,
+                           }: {
+    errand: ErrandListItem;
+    onOpen: (errandId: number) => void;
+}) => {
     const prio = getPriorityStyles(errand.priority);
     const {name: priorityName, cardStyle, valueStyle, badgeStyle} = prio;
 
@@ -130,7 +134,7 @@ export const ErrandCard = ({errand}: { errand: ErrandListItem }) => {
             <div className="mt-auto flex justify-end pt-4">
                 <button
                     className="rounded-full bg-emerald-300 px-6 py-2 text-sm font-semibold text-emerald-950 shadow-sm hover:bg-emerald-400"
-                    onClick={() => navigate(`/errands/${errand.errandId}`)}
+                    onClick={() => onOpen(errand.errandId)}
                 >
                     Visa mer
                 </button>

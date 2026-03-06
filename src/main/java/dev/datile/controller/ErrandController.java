@@ -1,5 +1,6 @@
 package dev.datile.controller;
 
+import dev.datile.dto.errands.ErrandDetailsDto;
 import dev.datile.dto.errands.ErrandsResponseDto;
 import dev.datile.service.ErrandService;
 import org.springframework.web.bind.annotation.*;
@@ -27,5 +28,10 @@ public class ErrandController {
     ) {
         // Controller does not do anything smart, it just delegates to service as it should
         return service.list(statusIds, page, size, sortBy, sortDir);
+    }
+
+    @GetMapping("/{id}")
+    public ErrandDetailsDto getById(@PathVariable Long id) {
+        return service.getById(id);
     }
 }

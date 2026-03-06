@@ -1,15 +1,20 @@
 package dev.datile.service;
 
+import dev.datile.dto.errands.ErrandDetailsDto;
 import dev.datile.dto.errands.ErrandsResponseDto;
+import dev.datile.dto.errands.PriorityDto;
+import dev.datile.dto.errands.StatusDto;
 import dev.datile.mapper.ErrandMapper;
 import dev.datile.repository.ErrandHistoryRepository;
 import dev.datile.repository.ErrandRepository;
 import dev.datile.spec.ErrandSpecifications;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.data.jpa.domain.Specification;
 import dev.datile.domain.Errand;
+import org.springframework.web.server.ResponseStatusException;
 
 
 import java.util.Arrays;
@@ -71,6 +76,41 @@ public class ErrandService {
                 .toList();
 
         return new ErrandsResponseDto(dtos, result.getNumber(), result.getSize(), result.getTotalElements(), result.getTotalPages());
+    }
+
+    public ErrandDetailsDto getById(Long id) {
+        Errand errand = repo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ärende inte hittat"));
+
+        final var history = historyRepo.findFullHistoryByErrandId(id).stream()
+                .map(h -> new dev.datile.dto.errands.HistoryEntryDto(
+                        h.getDescription(),
+                        h.getVerifiedName(),
+                        h.getCreatedAt().toInstant()
+                ))
+                .toList();
+
+        return new ErrandDetailsDto(
+                errand.getErrandId(),
+                errand.getCreatedAt(),
+                errand.getTitle(),
+                errand.getDescription(),
+                new StatusDto(
+                        errand.getStatus().getStatusId(),
+                        errand.getStatus().getName()
+                ),
+                new PriorityDto(
+                        errand.getPriority().getPriorityId(),
+                        errand.getPriority().getName(),
+                        errand.getPriority().getColor()
+                ),
+                null,
+                null,
+                null,
+                history,
+                null,
+                null
+        );
     }
 
     private List<Long> parseCsvLongs(String csv) {
