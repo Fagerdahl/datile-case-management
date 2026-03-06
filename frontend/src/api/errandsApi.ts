@@ -1,5 +1,15 @@
-import type { ErrandsResponse } from "../types/errands";
+import type {ErrandsResponse, ErrandDetails} from "../types/errands";
 
+export const fetchErrandById = async (id: number): Promise<ErrandDetails> => {
+    const res = await fetch(`/api/errands/${id}`);
+
+    if (!res.ok) {
+        const body = await res.text();
+        throw new Error(body || `Request failed (${res.status})`);
+    }
+
+    return res.json();
+};
 export const fetchErrands = async (params: {
     page?: number;
     size?: number;

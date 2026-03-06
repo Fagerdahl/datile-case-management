@@ -22,7 +22,14 @@ public interface ErrandHistoryRepository extends JpaRepository<ErrandHistoryEntr
         Timestamp getCreatedAt();
     }
 
-    /* This special native SQL-query makes it possible to show (ONLY 2 ROWS MAX) history for errands that are shown on the page */
+    interface HistoryRow {
+        String getDescription();
+        String getVerifiedName();
+        Timestamp getCreatedAt();
+    }
+
+
+    /* Preview for list/card view: max 2 rows per errand */
     @Query(value = """
             SELECT x.errand_id AS errandId, x.description AS description, x.verified_name AS verifiedName, x.created_at AS createdAt
             FROM (
@@ -35,4 +42,15 @@ public interface ErrandHistoryRepository extends JpaRepository<ErrandHistoryEntr
             ORDER BY x.errand_id, x.created_at DESC
             """, nativeQuery = true)
     List<HistoryPreviewRow> findHistoryPreview(@Param("errandIds") List<Long> errandIds, @Param("limit") int limit);
+
+    /* Full history for one errand, used in modal/details view */
+    @Query(value = """
+            SELECT eh.description AS description,
+                   eh.verified_name AS verifiedName,
+                   eh.created_at AS createdAt
+            FROM errand_history eh
+            WHERE eh.errand_id = :errandId
+            ORDER BY eh.created_at DESC
+            """, nativeQuery = true)
+    List<HistoryRow> findFullHistoryByErrandId(@Param("errandId") Long errandId);
 }
