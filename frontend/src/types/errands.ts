@@ -66,9 +66,22 @@ export type ErrandDetails = {
     status: ErrandStatus;
     priority: ErrandPriority;
     history: ErrandHistoryItem[];
+    purchases: ErrandPurchase[];
     assignee: ErrandAssignee | null;
     customer: ErrandCustomer | null;
     contact: ErrandContact | null;
     timeSpent: number | null;
     agreedPrice: number | null;
+};
+
+export type ErrandPurchase = {
+    purchaseId: number;
+    itemName: string;
+    quantity: number;
+    purchasePrice: number;
+    shippingCost: number;
+    salePrice: number;
+    totalPurchaseCost: number;
+    totalSaleValue: number;
+    profit: number;
 };

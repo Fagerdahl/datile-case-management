@@ -6,13 +6,8 @@ import dev.datile.domain.Customer;
 import dev.datile.domain.Errand;
 import dev.datile.domain.Priority;
 import dev.datile.domain.Status;
-import dev.datile.dto.errands.AssigneeDto;
-import dev.datile.dto.errands.ContactDto;
-import dev.datile.dto.errands.CustomerDto;
-import dev.datile.dto.errands.ErrandListItemDto;
-import dev.datile.dto.errands.HistoryEntryDto;
-import dev.datile.dto.errands.PriorityDto;
-import dev.datile.dto.errands.StatusDto;
+import dev.datile.dto.errands.*;
+import dev.datile.domain.Purchase;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -32,6 +27,42 @@ public class ErrandMapper {
                 toAssigneeDto(e.getAssignee()),
                 toCustomerDto(e.getCustomer()),
                 toContactDto(e.getContact())
+        );
+    }
+
+    public ErrandDetailsDto toDetailsDto(
+            Errand e,
+            List<HistoryEntryDto> history,
+            List<PurchaseDto> purchases
+    ) {
+        return new ErrandDetailsDto(
+                e.getErrandId(),
+                e.getCreatedAt(),
+                e.getTitle(),
+                e.getDescription(),
+                toStatusDto(e.getStatus()),
+                toPriorityDto(e.getPriority()),
+                history,
+                purchases,
+                toAssigneeDto(e.getAssignee()),
+                toCustomerDto(e.getCustomer()),
+                toContactDto(e.getContact()),
+                e.getTimeSpent(),
+                e.getAgreedPrice()
+        );
+    }
+
+    public PurchaseDto toPurchaseDto(Purchase purchase) {
+        return new PurchaseDto(
+                purchase.getPurchaseId(),
+                purchase.getItemName(),
+                purchase.getQuantity(),
+                purchase.getPurchasePrice(),
+                purchase.getShippingCost(),
+                purchase.getSalePrice(),
+                purchase.getTotalPurchaseCost(),
+                purchase.getTotalSaleValue(),
+                purchase.getProfit()
         );
     }
 

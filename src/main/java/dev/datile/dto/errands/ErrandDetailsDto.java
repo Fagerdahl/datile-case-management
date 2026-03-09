@@ -13,6 +13,7 @@ public record ErrandDetailsDto(
         StatusDto status,
         PriorityDto priority,
         List<HistoryEntryDto> history,
+        List<PurchaseDto> purchases,
         AssigneeDto assignee,
         CustomerDto customer,
         ContactDto contact,

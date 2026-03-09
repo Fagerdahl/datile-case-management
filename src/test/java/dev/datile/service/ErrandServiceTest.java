@@ -2,13 +2,7 @@ package dev.datile.service;
 
 import dev.datile.dto.errands.ErrandsResponseDto;
 import dev.datile.mapper.ErrandMapper;
-import dev.datile.repository.AssigneeRepository;
-import dev.datile.repository.ContactRepository;
-import dev.datile.repository.CustomerRepository;
-import dev.datile.repository.ErrandHistoryRepository;
-import dev.datile.repository.ErrandRepository;
-import dev.datile.repository.PriorityRepository;
-import dev.datile.repository.StatusRepository;
+import dev.datile.repository.*;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.PageImpl;
@@ -32,6 +26,7 @@ class ErrandServiceTest {
         var assigneeRepo = mock(AssigneeRepository.class);
         var customerRepo = mock(CustomerRepository.class);
         var contactRepo = mock(ContactRepository.class);
+        var purchaseRepo = mock(PurchaseRepository.class);
 
         var service = new ErrandService(
                 repo,
@@ -41,7 +36,8 @@ class ErrandServiceTest {
                 priorityRepo,
                 assigneeRepo,
                 customerRepo,
-                contactRepo
+                contactRepo,
+                purchaseRepo
         );
 
         when(repo.findAll(any(Specification.class), any(Pageable.class)))

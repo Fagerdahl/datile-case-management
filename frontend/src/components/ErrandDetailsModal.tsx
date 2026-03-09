@@ -41,7 +41,8 @@ const formatMoney = (value?: number | null) => {
     return new Intl.NumberFormat(undefined, {
         style: "currency",
         currency: "SEK",
-        maximumFractionDigits: 0,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
     }).format(value);
 };
 
@@ -88,6 +89,20 @@ const getPriorityTone = (priority?: ErrandDetails["priority"] | null) => {
     };
 };
 
+const getProfitTone = (value?: number | null) => {
+    const profit = Number(value ?? 0);
+
+    if (profit > 0) {
+        return "border-green-200 bg-green-50 text-green-700";
+    }
+
+    if (profit < 0) {
+        return "border-red-200 bg-red-50 text-red-700";
+    }
+
+    return "border-slate-200 bg-slate-50 text-slate-600";
+};
+
 const Field = ({
                    label,
                    value,
@@ -116,6 +131,7 @@ export const ErrandDetailsModal = ({
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [isAddingPurchase, setIsAddingPurchase] = useState(false);
 
     const dialogRef = useRef<HTMLDivElement | null>(null);
 
@@ -125,6 +141,7 @@ export const ErrandDetailsModal = ({
         const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
         setIsEditing(false);
+        setIsAddingPurchase(false);
 
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
@@ -176,6 +193,7 @@ export const ErrandDetailsModal = ({
     const phone = data?.contact?.phoneNumber ?? "—";
     const mail = data?.contact?.mail ?? "—";
     const history = data?.history ?? [];
+    const purchases = data?.purchases ?? [];
 
     const handleSaved = (updatedErrand: ErrandDetails) => {
         setData(updatedErrand);
@@ -258,8 +276,8 @@ export const ErrandDetailsModal = ({
                                         className="inline-flex rounded-full border px-3 py-1 text-sm font-semibold"
                                         style={priorityUi.badgeStyle}
                                     >
-                    {priorityUi.name}
-                  </span>
+                                        {priorityUi.name}
+                                    </span>
                                 </div>
                             </div>
 
@@ -309,6 +327,66 @@ export const ErrandDetailsModal = ({
                                         <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">
                                             {safe(data.description)}
                                         </div>
+                                    </section>
+
+                                    <section className="rounded-2xl border border-slate-200 bg-white p-5">
+                                        <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
+                                            Inköp
+                                        </h3>
+
+                                        {purchases.length === 0 ? (
+                                            <div className="text-sm text-slate-500">Inga inköp än.</div>
+                                        ) : (
+                                            <ul className="space-y-3">
+                                                {purchases.map((purchase) => {
+                                                    const profit = Number(purchase.profit ?? 0);
+                                                    const profitTone = getProfitTone(profit);
+
+                                                    return (
+                                                        <li
+                                                            key={purchase.purchaseId}
+                                                            className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                                                        >
+                                                            <div className="flex items-start justify-between gap-3">
+                                                                <div className="min-w-0">
+                                                                    <div className="text-sm font-semibold text-slate-900">
+                                                                        {safe(purchase.itemName)}
+                                                                    </div>
+                                                                    <div className="mt-1 text-xs text-slate-500">
+                                                                        {purchase.quantity} st
+                                                                    </div>
+                                                                </div>
+
+                                                                <span
+                                                                    className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${profitTone}`}
+                                                                >
+                                                                    {profit > 0 ? "+" : ""}
+                                                                    {formatMoney(profit)}
+                                                                </span>
+                                                            </div>
+
+                                                            <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                                                                <div>
+                                                                    Inköpspris: {formatMoney(purchase.purchasePrice)}
+                                                                </div>
+                                                                <div>
+                                                                    Frakt: {formatMoney(purchase.shippingCost)}
+                                                                </div>
+                                                                <div>
+                                                                    Utpris: {formatMoney(purchase.salePrice)}
+                                                                </div>
+                                                                <div>
+                                                                    Total kostnad: {formatMoney(purchase.totalPurchaseCost)}
+                                                                </div>
+                                                                <div className="sm:col-span-2">
+                                                                    Totalt utpris: {formatMoney(purchase.totalSaleValue)}
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        )}
                                     </section>
 
                                     <section className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -365,9 +443,32 @@ export const ErrandDetailsModal = ({
                                             <button
                                                 type="button"
                                                 className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                                                onClick={() => setIsAddingPurchase(true)}
                                             >
                                                 + Lägg till inköp
                                             </button>
+
+                                            {isAddingPurchase && (
+                                                <section className="rounded-2xl border border-slate-200 bg-white p-5">
+                                                    <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
+                                                        Nytt inköp
+                                                    </h3>
+
+                                                    <div className="text-sm text-slate-600">
+                                                        Här ska formuläret för nytt inköp visas.
+                                                    </div>
+
+                                                    <div className="mt-4">
+                                                        <button
+                                                            type="button"
+                                                            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                                                            onClick={() => setIsAddingPurchase(false)}
+                                                        >
+                                                            Avbryt
+                                                        </button>
+                                                    </div>
+                                                </section>
+                                            )}
 
                                             <button
                                                 type="button"

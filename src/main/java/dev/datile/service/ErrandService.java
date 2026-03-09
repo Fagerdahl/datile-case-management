@@ -27,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
+import dev.datile.repository.PurchaseRepository;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -50,6 +51,7 @@ public class ErrandService {
     private final AssigneeRepository assigneeRepo;
     private final CustomerRepository customerRepo;
     private final ContactRepository contactRepo;
+    private final PurchaseRepository purchaseRepo;
 
     public ErrandService(
             ErrandRepository repo,
@@ -59,7 +61,8 @@ public class ErrandService {
             PriorityRepository priorityRepo,
             AssigneeRepository assigneeRepo,
             CustomerRepository customerRepo,
-            ContactRepository contactRepo
+            ContactRepository contactRepo,
+            PurchaseRepository purchaseRepo
     ) {
         this.repo = repo;
         this.mapper = mapper;
@@ -69,6 +72,7 @@ public class ErrandService {
         this.assigneeRepo = assigneeRepo;
         this.customerRepo = customerRepo;
         this.contactRepo = contactRepo;
+        this.purchaseRepo = purchaseRepo;
     }
 
     @Transactional(readOnly = true)
@@ -135,40 +139,14 @@ public class ErrandService {
                 ))
                 .toList();
 
-        return new ErrandDetailsDto(
-                errand.getErrandId(),
-                errand.getCreatedAt(),
-                errand.getTitle(),
-                errand.getDescription(),
-                errand.getStatus() == null ? null : new dev.datile.dto.errands.StatusDto(
-                        errand.getStatus().getStatusId(),
-                        errand.getStatus().getName()
-                ),
-                errand.getPriority() == null ? null : new dev.datile.dto.errands.PriorityDto(
-                        errand.getPriority().getPriorityId(),
-                        errand.getPriority().getName(),
-                        errand.getPriority().getColor()
-                ),
+        final var purchases = purchaseRepo.findByErrandErrandId(id).stream()
+                .map(mapper::toPurchaseDto)
+                .toList();
+
+        return mapper.toDetailsDto(
+                errand,
                 history,
-                errand.getAssignee() == null ? null : new dev.datile.dto.errands.AssigneeDto(
-                        errand.getAssignee().getAssigneeId(),
-                        errand.getAssignee().getName()
-                ),
-                errand.getCustomer() == null ? null : new dev.datile.dto.errands.CustomerDto(
-                        errand.getCustomer().getCustomerId(),
-                        errand.getCustomer().getName(),
-                        errand.getCustomer().getIsActive()
-                ),
-                errand.getContact() == null ? null : new dev.datile.dto.errands.ContactDto(
-                        errand.getContact().getContactId(),
-                        errand.getContact().getCustomer().getCustomerId(),
-                        errand.getContact().getFirstName(),
-                        errand.getContact().getLastName(),
-                        errand.getContact().getPhoneNumber(),
-                        errand.getContact().getMail()
-                ),
-                errand.getTimeSpent(),
-                errand.getAgreedPrice()
+                purchases
         );
     }
     @Transactional
