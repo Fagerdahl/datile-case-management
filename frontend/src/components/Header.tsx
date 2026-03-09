@@ -5,8 +5,8 @@ import { useState } from "react";
 export default function Header() {
     // Reusable styling for nav links
     const navLinkClass = ({ isActive }: NavLinkRenderProps) => {
-        return `flex items-center justify-center px-12 py-4 lg:px-8 md:px-4 sm:px-2 sm:h-full my-4 rounded-xl sm:rounded-none bg-[#001A31] sm:bg-[#001A31] shadow-md transition
-        ${isActive ? "font-bold text-[#0059FF] sm:text-[#F7F7F7] sm:bg-[#003666]" : ""}`;
+        return `flex items-center justify-center px-12 py-4 lg:px-8 md:px-4 sm:px-2 sm:h-full my-4 rounded-xl sm:rounded-none bg-[#001A31] sm:bg-[#001A31] shadow-md transition hover:scale-98 hover:bg-[#00213D] active:scale-95
+        ${isActive ? "font-bold text-[#0059FF] sm:text-[#F7F7F7] sm:bg-[#003666] hover:bg-[#003666]" : ""}`;
     };
 
     const [modalOpen, setModalOpen] = useState(false);
@@ -22,9 +22,9 @@ export default function Header() {
             )}
 
             <header
-                className={`${modalOpen ? "flex items-center text-3xl bg-[#E7F0EC] shadow-lg rounded-xl sm:rounded-none" : "hidden"}
+                className={`${modalOpen ? "flex items-center bg-[#E7F0EC] rounded-xl sm:rounded-none" : "hidden"}
                 fixed top-6 right-10 bottom-22 left-10 sm:static sm:flex sm:w-full sm:bg-[#001A31]
-                justify-center text-[5vw] sm:text-[2vw] md:text-[1.5vw] lg:text-[1vw] border border-black/10 border-b-2`}
+                justify-center text-[5vw] sm:text-[2vw] md:text-[1.5vw] lg:text-[1vw] border sm:border-0 shadow-lg border-black/10 border-b-2`}
             >
                 <nav className="font-poppins sm:flex sm:h-16 items-center justify-center text-[#F7F7F7]">
                     <NavLink to={"/errands"} className="hidden sm:flex px-4">
@@ -37,12 +37,7 @@ export default function Header() {
                     <NavLink to={"/purchases"} className={navLinkClass} onClick={toggleModal}>INKÖP</NavLink>
                     <NavLink to={"/users"} className={navLinkClass} onClick={toggleModal}>ANVÄNDARE</NavLink>
                     <NavLink to={"/settings"} className={navLinkClass} onClick={toggleModal}>INSTÄLLNINGAR</NavLink>
-
-                    <NavLink to={"/logout"} className="" onClick={toggleModal}>
-                        <button className="flex items-center justify-center w-full py-2 mt-8 sm:mt-0 lg:px-8 md:px-4 sm:px-2 bg-[#99D0B6] rounded-xl sm:rounded-full drop-shadow-md transition">
-                            LOGGA UT
-                        </button>
-                    </NavLink>
+                    <NavLink to={"/logout"} className={`flex items-center justify-center py-1 mt-6 sm:mt-0 sm:ml-2 lg:px-8 md:px-4 sm:px-2 bg-[#99D0B6] rounded-xl sm:rounded-full drop-shadow-md transition hover:scale-98 hover:bg-[#88BFA5] active:scale-95`} onClick={toggleModal}>LOGGA UT</NavLink>
                 </nav>
             </header>
 
