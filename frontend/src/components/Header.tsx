@@ -46,7 +46,7 @@ export default function Header() {
                 </nav>
             </header>
 
-            <div className="absolute bottom-0 right-0 sm:hidden w-full h-15 bg-[#001A31]">
+            <div className="fixed bottom-0 right-0 sm:hidden w-full h-15 bg-[#001A31]">
                 <NavLink to={"/errands"} className="absolute left-4 top-4">
                     <img alt={"datile-logo"} src={"/datile-mobile-logo.png"} height={50} width={100} />
                 </NavLink>
