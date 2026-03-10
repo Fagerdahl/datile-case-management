@@ -762,6 +762,7 @@ export const EditErrandForm = ({
             <div className="flex justify-end gap-3">
                 <button
                     type="button"
+                    onClick={onCancel}
                     className="rounded-full border border-slate-300 px-8 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
                 >
                     Avbryt
