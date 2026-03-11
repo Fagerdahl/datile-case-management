@@ -43,7 +43,11 @@ export const fetchErrands = async (params: {
     size?: number;
     sortBy?: string;
     sortDir?: string;
-    statusIds?: number[];
+    status?: string;
+    priority?: string;
+    assigneeId?: string | number;
+    customerId?: string | number;
+    q?: string;
 }): Promise<ErrandsResponse> => {
     const url = new URL("/api/errands", window.location.origin);
 
@@ -52,8 +56,24 @@ export const fetchErrands = async (params: {
     url.searchParams.set("sortBy", params.sortBy ?? "date");
     url.searchParams.set("sortDir", params.sortDir ?? "desc");
 
-    if (params.statusIds?.length) {
-        url.searchParams.set("statusIds", params.statusIds.join(","));
+    if (params.status) {
+        url.searchParams.set("status", String(params.status));
+    }
+
+    if (params.priority) {
+        url.searchParams.set("priority", String(params.priority));
+    }
+
+    if (params.assigneeId !== undefined && params.assigneeId !== "") {
+        url.searchParams.set("assigneeId", String(params.assigneeId));
+    }
+
+    if (params.customerId !== undefined && params.customerId !== "") {
+        url.searchParams.set("customerId", String(params.customerId));
+    }
+
+    if (params.q && params.q.trim()) {
+        url.searchParams.set("q", params.q.trim());
     }
 
     const res = await fetch(url.toString());

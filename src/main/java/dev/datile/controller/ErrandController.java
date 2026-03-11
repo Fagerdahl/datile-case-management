@@ -1,14 +1,10 @@
 package dev.datile.controller;
 
-import dev.datile.dto.errands.AddHistoryEntryDto;
-import dev.datile.dto.errands.ErrandsResponseDto;
-import dev.datile.dto.errands.ErrandDetailsDto;
-import dev.datile.dto.errands.UpdateErrandDto;
+import dev.datile.dto.errands.*;
 import dev.datile.service.ErrandService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import dev.datile.dto.errands.CreateErrandDto;
 
 /* Everything in this class is API routes under /api/errands
  * @GetMapping means: when someone does GET /api/errands -> run this method
@@ -26,13 +22,29 @@ public class ErrandController {
 
     @GetMapping
     public ErrandsResponseDto list(
-            @RequestParam(required = false) String statusIds,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String priority,
+            @RequestParam(required = false) Long assigneeId,
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "date") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "20") Integer size
     ) {
-        return service.list(statusIds, page, size, sortBy, sortDir);
+        ErrandFilterRequest filter = new ErrandFilterRequest(
+                status,
+                priority,
+                assigneeId,
+                customerId,
+                q,
+                sortBy,
+                sortDir,
+                page,
+                size
+        );
+
+        return service.list(filter);
     }
 
     @GetMapping("/{id}")

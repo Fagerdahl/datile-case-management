@@ -1,5 +1,6 @@
 package dev.datile.service;
 
+import dev.datile.dto.errands.ErrandFilterRequest;
 import dev.datile.dto.errands.ErrandsResponseDto;
 import dev.datile.mapper.ErrandMapper;
 import dev.datile.repository.*;
@@ -49,7 +50,17 @@ class ErrandServiceTest {
         when(historyRepo.findHistoryPreview(anyList(), anyInt()))
                 .thenReturn(List.of());
 
-        ErrandsResponseDto result = service.list("1,2", 0, 20, "date", "desc");
+        ErrandsResponseDto result = service.list(new ErrandFilterRequest(
+                null,   // status
+                null,   // priority
+                null,   // assigneeId
+                null,   // customerId
+                null,   // q
+                "date", // sortBy
+                "desc", // sortDir
+                0,      // page
+                20      // size
+        ));
 
         var specCaptor = ArgumentCaptor.forClass(Specification.class);
         var pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
