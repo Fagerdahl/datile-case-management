@@ -1,11 +1,14 @@
-import {BrowserRouter} from "react-router-dom";
-import { AppRoutes, Header } from "./components";
+import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./components/AuthProvider.tsx";
+import { Header, AppRoutes } from "./components";
 
 export default function App() {
     return (
-            <BrowserRouter>
-                <Header/>
-                <AppRoutes/>
-            </BrowserRouter>
+        <BrowserRouter>
+            <AuthProvider>
+                <Header />
+                <AppRoutes />
+            </AuthProvider>
+        </BrowserRouter>
     );
 }

@@ -1,9 +1,19 @@
-import { apiClient } from "../services/apiClient.ts";
+import { apiClient } from "../services/apiClient";
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
+    const { user } = useAuth();
 
-    async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+    React.useEffect(() => {
+        if (user) navigate("/");
+    }, [user]);
+
+    const navigate = useNavigate();
+    const { refreshAuth } = useAuth();
+
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
         const formData = new FormData(e.currentTarget);
@@ -13,6 +23,12 @@ export default function Login() {
 
         try {
             await apiClient.post("/api/auth/login", { username, password });
+
+            // Ask backend who the user is (uses the cookie)
+            await refreshAuth();
+
+            // Go to main page
+            navigate("/");
         } catch (err) {
             console.error("Login failed", err);
         }
