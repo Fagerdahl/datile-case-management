@@ -1,3 +1,38 @@
+export type CreateErrandPurchaseRequest = {
+    itemName: string;
+    quantity: number;
+    purchasePrice: number;
+    shippingCost: number;
+    salePrice: number;
+};
+
+export type CreateErrandRequest = {
+    title: string;
+    description: string;
+    customerId: number;
+    contactId: number;
+    assigneeId: number;
+    statusId: number;
+    priorityId: number;
+    timeSpent: number;
+    agreedPrice: number;
+    purchases: CreateErrandPurchaseRequest[];
+};
+
+export type CreateErrandResponse = {
+    errandId: number;
+    createdAt: string;
+    title: string;
+    assignee: ErrandAssignee | null;
+    customer: ErrandCustomer | null;
+    contact: ErrandContact | null;
+};
+
+export type AddErrandHistoryRequest = {
+    description: string;
+};
+
+
 export type ErrandsResponse = {
     errands: ErrandListItem[];
     page: number;
@@ -66,9 +101,53 @@ export type ErrandDetails = {
     status: ErrandStatus;
     priority: ErrandPriority;
     history: ErrandHistoryItem[];
+    purchases: ErrandPurchase[];
     assignee: ErrandAssignee | null;
     customer: ErrandCustomer | null;
     contact: ErrandContact | null;
     timeSpent: number | null;
     agreedPrice: number | null;
+};
+
+export type ErrandPurchase = {
+    purchaseId: number;
+    itemName: string;
+    quantity: number;
+    purchasePrice: number;
+    shippingCost: number;
+    salePrice: number;
+    totalPurchaseCost: number;
+    totalSaleValue: number;
+    profit: number;
+};
+
+export type ErrandFilters = {
+    sortBy: string;
+    statuses: string[];
+    priorities: string[];
+    assigneeId: string;
+    customerId: string;
+    q: string;
+};
+
+export const initialErrandFilters: ErrandFilters = {
+    sortBy: "date",
+    statuses: [],
+    priorities: [],
+    assigneeId: "",
+    customerId: "",
+    q: "",
+};
+
+export const buildErrandFilterParams = (filters: ErrandFilters) => {
+    const params: Record<string, string | number> = {};
+
+    if (filters.sortBy) params.sortBy = filters.sortBy;
+    if (filters.statuses.length > 0) params.status = filters.statuses.join(",");
+    if (filters.priorities.length > 0) params.priority = filters.priorities.join(",");
+    if (filters.assigneeId) params.assigneeId = filters.assigneeId;
+    if (filters.customerId) params.customerId = filters.customerId;
+    if (filters.q.trim()) params.q = filters.q.trim();
+
+    return params;
 };
