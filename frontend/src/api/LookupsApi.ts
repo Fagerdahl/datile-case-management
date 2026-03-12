@@ -1,26 +1,28 @@
-export type StatusOption = {
+import { apiClient } from "../services/apiClient";
+
+export type StatusLookup = {
     statusId: number;
     name: string;
 };
 
-export type PriorityOption = {
+export type PriorityLookup = {
     priorityId: number;
     name: string;
     color: string;
     isDefault: boolean;
 };
 
-export type AssigneeOption = {
+export type AssigneeLookup = {
     assigneeId: number;
     name: string;
 };
 
-export type CustomerOption = {
+export type CustomerLookup = {
     customerId: number;
     name: string;
 };
 
-export type ContactOption = {
+export type ContactLookup = {
     contactId: number;
     customerId: number;
     firstName: string;
@@ -29,31 +31,17 @@ export type ContactOption = {
     mail: string;
 };
 
-const handleResponse = async <T>(res: Response): Promise<T> => {
-    if (!res.ok) {
-        const body = await res.text();
-        throw new Error(body || `Request failed (${res.status})`);
-    }
+export const fetchStatuses = async (): Promise<StatusLookup[]> =>
+    apiClient.get<StatusLookup[]>("/statuses");
 
-    return res.json();
-};
+export const fetchPriorities = async (): Promise<PriorityLookup[]> =>
+    apiClient.get<PriorityLookup[]>("/priorities");
 
-export const fetchStatuses = async (): Promise<StatusOption[]> => {
-    return handleResponse(await fetch("/api/statuses"));
-};
+export const fetchAssignees = async (): Promise<AssigneeLookup[]> =>
+    apiClient.get<AssigneeLookup[]>("/assignees");
 
-export const fetchPriorities = async (): Promise<PriorityOption[]> => {
-    return handleResponse(await fetch("/api/priorities"));
-};
+export const fetchCustomers = async (): Promise<CustomerLookup[]> =>
+    apiClient.get<CustomerLookup[]>("/customers");
 
-export const fetchAssignees = async (): Promise<AssigneeOption[]> => {
-    return handleResponse(await fetch("/api/assignees"));
-};
-
-export const fetchCustomers = async (): Promise<CustomerOption[]> => {
-    return handleResponse(await fetch("/api/customers"));
-};
-
-export const fetchContacts = async (): Promise<ContactOption[]> => {
-    return handleResponse(await fetch("/api/contacts"));
-};
+export const fetchContacts = async (): Promise<ContactLookup[]> =>
+    apiClient.get<ContactLookup[]>("/contacts");

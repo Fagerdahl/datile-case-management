@@ -149,7 +149,7 @@ public class ErrandService {
                 ))
                 .toList();
 
-        final var purchases = purchaseRepo.findByErrandErrandId(id).stream()
+        final var purchases = purchaseRepo.findByErrand_ErrandId(id).stream()
                 .map(mapper::toPurchaseDto)
                 .toList();
 
