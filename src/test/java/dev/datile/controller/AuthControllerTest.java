@@ -25,7 +25,7 @@ public class AuthControllerTest {
     void login_should_return_jwt() throws Exception {
         String body = """
                 {
-                    "username": "admin",
+                    "username": "admin@gmail.com",
                     "password": "password"
                 }
                 """;
@@ -41,7 +41,7 @@ public class AuthControllerTest {
     void me_should_return_username_when_present() throws Exception {
         String body = """
                 {
-                    "username": "user",
+                    "username": "user@gmail.com",
                     "password": "password"
                 }
                 """;
@@ -55,7 +55,7 @@ public class AuthControllerTest {
         mockMvc.perform(get("/api/auth/me")
                         .cookie(jwtCookie))
                 .andExpect(status().isOk())
-                .andExpect(content().string("{\"username\":\"user\"}"));
+                .andExpect(content().string("{\"username\":\"user@gmail.com\"}"));
     }
 
 }
