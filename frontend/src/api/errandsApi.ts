@@ -1,4 +1,7 @@
-import type { ErrandsResponse, ErrandDetails } from "../types/errands";
+import type {
+    ErrandsResponse, ErrandDetails, CreateErrandRequest,
+    CreateErrandResponse,
+} from "../types/errands";
 
 export type UpdateErrandRequest = {
     title: string;
@@ -14,6 +17,14 @@ export type UpdateErrandRequest = {
 
 export type AddHistoryEntryRequest = {
     description: string;
+};
+
+export type AddPurchaseRequest = {
+    itemName: string;
+    quantity: number;
+    purchasePrice: number;
+    shippingCost: number;
+    salePrice: number;
 };
 
 export const fetchErrandById = async (id: number): Promise<ErrandDetails> => {
@@ -32,7 +43,11 @@ export const fetchErrands = async (params: {
     size?: number;
     sortBy?: string;
     sortDir?: string;
-    statusIds?: number[];
+    status?: string;
+    priority?: string;
+    assigneeId?: string | number;
+    customerId?: string | number;
+    q?: string;
 }): Promise<ErrandsResponse> => {
     const url = new URL("/api/errands", window.location.origin);
 
@@ -41,11 +56,46 @@ export const fetchErrands = async (params: {
     url.searchParams.set("sortBy", params.sortBy ?? "date");
     url.searchParams.set("sortDir", params.sortDir ?? "desc");
 
-    if (params.statusIds?.length) {
-        url.searchParams.set("statusIds", params.statusIds.join(","));
+    if (params.status) {
+        url.searchParams.set("status", String(params.status));
+    }
+
+    if (params.priority) {
+        url.searchParams.set("priority", String(params.priority));
+    }
+
+    if (params.assigneeId !== undefined && params.assigneeId !== "") {
+        url.searchParams.set("assigneeId", String(params.assigneeId));
+    }
+
+    if (params.customerId !== undefined && params.customerId !== "") {
+        url.searchParams.set("customerId", String(params.customerId));
+    }
+
+    if (params.q && params.q.trim()) {
+        url.searchParams.set("q", params.q.trim());
     }
 
     const res = await fetch(url.toString());
+
+    if (!res.ok) {
+        const body = await res.text();
+        throw new Error(body || `Request failed (${res.status})`);
+    }
+
+    return res.json();
+};
+
+export const createErrand = async (
+    data: CreateErrandRequest,
+): Promise<CreateErrandResponse> => {
+    const res = await fetch("/api/errands", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+    });
 
     if (!res.ok) {
         const body = await res.text();
@@ -93,4 +143,60 @@ export const addErrandHistoryEntry = async (
     }
 
     return res.json();
+};
+
+export const addPurchase = async (
+    id: number,
+    data: AddPurchaseRequest,
+): Promise<void> => {
+    const res = await fetch(`/api/errands/${id}/purchases`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+        const body = await res.text();
+        throw new Error(body || `Request failed (${res.status})`);
+    }
+};
+export type UpdatePurchaseRequest = {
+    itemName: string;
+    quantity: number;
+    purchasePrice: number;
+    shippingCost: number;
+    salePrice: number;
+};
+
+export const updatePurchase = async (
+    purchaseId: number,
+    data: UpdatePurchaseRequest,
+) => {
+    const res = await fetch(`/api/errands/purchases/${purchaseId}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+        const body = await res.text();
+        throw new Error(body || `Request failed (${res.status})`);
+    }
+
+    return res.json();
+};
+
+export const deletePurchase = async (purchaseId: number): Promise<void> => {
+    const res = await fetch(`/api/errands/purchases/${purchaseId}`, {
+        method: "DELETE",
+    });
+
+    if (!res.ok) {
+        const body = await res.text();
+        throw new Error(body || `Request failed (${res.status})`);
+    }
 };

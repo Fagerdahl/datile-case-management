@@ -7,5 +7,5 @@ CREATE TABLE user
 );
 
 INSERT INTO user(username, password, role)
-VALUES ('admin', '$2a$10$OWtxLEAOiGedqi0n7sFBq.oKTr3LWPlDcrCgnTrEuWWZGuWpocYKW', 'ADMIN'),
-       ('user', '$2a$10$OWtxLEAOiGedqi0n7sFBq.oKTr3LWPlDcrCgnTrEuWWZGuWpocYKW', 'USER');
+VALUES ('admin@gmail.com', '$2a$10$OWtxLEAOiGedqi0n7sFBq.oKTr3LWPlDcrCgnTrEuWWZGuWpocYKW', 'ADMIN'),
+       ('user@gmail.com', '$2a$10$OWtxLEAOiGedqi0n7sFBq.oKTr3LWPlDcrCgnTrEuWWZGuWpocYKW', 'USER');

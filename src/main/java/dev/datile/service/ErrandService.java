@@ -6,10 +6,15 @@ import dev.datile.domain.Customer;
 import dev.datile.domain.Errand;
 import dev.datile.domain.ErrandHistoryEntry;
 import dev.datile.domain.Priority;
+import dev.datile.domain.Purchase;
 import dev.datile.domain.Status;
 import dev.datile.dto.errands.AddHistoryEntryDto;
+import dev.datile.dto.errands.CreateErrandDto;
+import dev.datile.dto.errands.CreatePurchaseDto;
 import dev.datile.dto.errands.ErrandDetailsDto;
+import dev.datile.dto.errands.ErrandFilterRequest;
 import dev.datile.dto.errands.ErrandsResponseDto;
+import dev.datile.dto.errands.HistoryEntryDto;
 import dev.datile.dto.errands.UpdateErrandDto;
 import dev.datile.mapper.ErrandMapper;
 import dev.datile.repository.AssigneeRepository;
@@ -18,6 +23,7 @@ import dev.datile.repository.CustomerRepository;
 import dev.datile.repository.ErrandHistoryRepository;
 import dev.datile.repository.ErrandRepository;
 import dev.datile.repository.PriorityRepository;
+import dev.datile.repository.PurchaseRepository;
 import dev.datile.repository.StatusRepository;
 import dev.datile.spec.ErrandSpecifications;
 import org.springframework.data.domain.PageRequest;
@@ -25,19 +31,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
-
-/* This is the EDIT LOGIC, aka service layer that pulls the data.
- * Service layers´ responsibility = business logic and orchestration.
- * ErrandService takes pagination and sort, pulls from ErrandRepository and maps to DTO.
- * + Returns the format that we want! This also saves data to the DB and returns updated details.
- * */
 
 @Service
 public class ErrandService {
@@ -50,6 +51,7 @@ public class ErrandService {
     private final AssigneeRepository assigneeRepo;
     private final CustomerRepository customerRepo;
     private final ContactRepository contactRepo;
+    private final PurchaseRepository purchaseRepo;
 
     public ErrandService(
             ErrandRepository repo,
@@ -59,7 +61,8 @@ public class ErrandService {
             PriorityRepository priorityRepo,
             AssigneeRepository assigneeRepo,
             CustomerRepository customerRepo,
-            ContactRepository contactRepo
+            ContactRepository contactRepo,
+            PurchaseRepository purchaseRepo
     ) {
         this.repo = repo;
         this.mapper = mapper;
@@ -69,19 +72,29 @@ public class ErrandService {
         this.assigneeRepo = assigneeRepo;
         this.customerRepo = customerRepo;
         this.contactRepo = contactRepo;
+        this.purchaseRepo = purchaseRepo;
     }
 
     @Transactional(readOnly = true)
-    public ErrandsResponseDto list(String statusIdsCsv, int page, int size, String sortBy, String sortDir) {
-        final var statusIds = parseCsvLongs(statusIdsCsv);
+    public ErrandsResponseDto list(ErrandFilterRequest filter) {
+        final var statuses = parseCsvStrings(filter.status());
+        final var priorities = parseCsvStrings(filter.priority());
 
-        final var spec = Specification.where(ErrandSpecifications.statusIdIn(statusIds));
+        validateStatuses(statuses);
+        validatePriorities(priorities);
 
         final var pageable = PageRequest.of(
-                Math.max(page, 0),
-                size <= 0 ? 20 : Math.min(size, 200),
-                Sort.by(parseDirection(sortDir), mapSortField(sortBy))
+                Math.max(filter.page() != null ? filter.page() : 0, 0),
+                normalizePageSize(filter.size()),
+                Sort.by(parseDirection(filter.sortDir()), mapSortField(filter.sortBy()))
         );
+
+        final Specification<Errand> spec = Specification
+                .where(ErrandSpecifications.hasStatuses(statuses))
+                .and(ErrandSpecifications.hasPriorities(priorities))
+                .and(ErrandSpecifications.hasAssigneeId(filter.assigneeId()))
+                .and(ErrandSpecifications.hasCustomerId(filter.customerId()))
+                .and(ErrandSpecifications.matchesSearch(filter.q()));
 
         final var result = repo.findAll(spec, pageable);
 
@@ -96,7 +109,7 @@ public class ErrandService {
                 .collect(java.util.stream.Collectors.groupingBy(
                         ErrandHistoryRepository.HistoryPreviewRow::getErrandId,
                         java.util.stream.Collectors.mapping(
-                                row -> new dev.datile.dto.errands.HistoryEntryDto(
+                                row -> new HistoryEntryDto(
                                         row.getHistoryId(),
                                         row.getDescription(),
                                         row.getVerifiedName(),
@@ -121,13 +134,14 @@ public class ErrandService {
                 result.getTotalPages()
         );
     }
+
     @Transactional(readOnly = true)
     public ErrandDetailsDto getById(Long id) {
         Errand errand = repo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ärende inte hittat"));
 
         final var history = historyRepo.findFullHistoryByErrandId(id).stream()
-                .map(h -> new dev.datile.dto.errands.HistoryEntryDto(
+                .map(h -> new HistoryEntryDto(
                         h.getHistoryId(),
                         h.getDescription(),
                         h.getVerifiedName(),
@@ -135,42 +149,17 @@ public class ErrandService {
                 ))
                 .toList();
 
-        return new ErrandDetailsDto(
-                errand.getErrandId(),
-                errand.getCreatedAt(),
-                errand.getTitle(),
-                errand.getDescription(),
-                errand.getStatus() == null ? null : new dev.datile.dto.errands.StatusDto(
-                        errand.getStatus().getStatusId(),
-                        errand.getStatus().getName()
-                ),
-                errand.getPriority() == null ? null : new dev.datile.dto.errands.PriorityDto(
-                        errand.getPriority().getPriorityId(),
-                        errand.getPriority().getName(),
-                        errand.getPriority().getColor()
-                ),
+        final var purchases = purchaseRepo.findByErrandErrandId(id).stream()
+                .map(mapper::toPurchaseDto)
+                .toList();
+
+        return mapper.toDetailsDto(
+                errand,
                 history,
-                errand.getAssignee() == null ? null : new dev.datile.dto.errands.AssigneeDto(
-                        errand.getAssignee().getAssigneeId(),
-                        errand.getAssignee().getName()
-                ),
-                errand.getCustomer() == null ? null : new dev.datile.dto.errands.CustomerDto(
-                        errand.getCustomer().getCustomerId(),
-                        errand.getCustomer().getName(),
-                        errand.getCustomer().getIsActive()
-                ),
-                errand.getContact() == null ? null : new dev.datile.dto.errands.ContactDto(
-                        errand.getContact().getContactId(),
-                        errand.getContact().getCustomer().getCustomerId(),
-                        errand.getContact().getFirstName(),
-                        errand.getContact().getLastName(),
-                        errand.getContact().getPhoneNumber(),
-                        errand.getContact().getMail()
-                ),
-                errand.getTimeSpent(),
-                errand.getAgreedPrice()
+                purchases
         );
     }
+
     @Transactional
     public ErrandDetailsDto update(Long id, UpdateErrandDto request) {
         Errand errand = repo.findById(id)
@@ -207,13 +196,69 @@ public class ErrandService {
         errand.setAssignee(assignee);
         errand.setCustomer(customer);
         errand.setContact(contact);
-        errand.setTimeSpent(request.timeSpent());
+        errand.setTimeSpent(
+                request.timeSpent() != null ? BigDecimal.valueOf(request.timeSpent()) : null
+        );
         errand.setAgreedPrice(request.agreedPrice());
 
         repo.save(errand);
 
         return getById(errand.getErrandId());
     }
+
+    @Transactional
+    public ErrandDetailsDto create(CreateErrandDto request) {
+        Status status = statusRepo.findById(request.statusId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ogiltigt statusId"));
+
+        Priority priority = priorityRepo.findById(request.priorityId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ogiltigt priorityId"));
+
+        Assignee assignee = assigneeRepo.findById(request.assigneeId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ogiltigt assigneeId"));
+
+        Customer customer = customerRepo.findById(request.customerId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ogiltigt customerId"));
+
+        Contact contact = contactRepo.findById(request.contactId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ogiltigt contactId"));
+
+        Errand errand = new Errand(
+                request.title().trim(),
+                request.description() != null ? request.description().trim() : null,
+                status,
+                priority,
+                Instant.now()
+        );
+
+        errand.setAssignee(assignee);
+        errand.setCustomer(customer);
+        errand.setContact(contact);
+        errand.setTimeSpent(
+                request.timeSpent() != null ? BigDecimal.valueOf(request.timeSpent()) : null
+        );
+        errand.setAgreedPrice(BigDecimal.valueOf(request.agreedPrice()));
+
+        Errand savedErrand = repo.save(errand);
+
+        if (request.purchases() != null && !request.purchases().isEmpty()) {
+            for (CreatePurchaseDto purchaseDto : request.purchases()) {
+                Purchase purchase = new Purchase(
+                        savedErrand,
+                        purchaseDto.itemName().trim(),
+                        purchaseDto.quantity(),
+                        purchaseDto.purchasePrice(),
+                        purchaseDto.shippingCost(),
+                        purchaseDto.salePrice()
+                );
+
+                purchaseRepo.save(purchase);
+            }
+        }
+
+        return getById(savedErrand.getErrandId());
+    }
+
     @Transactional
     public ErrandDetailsDto addHistoryEntry(Long id, AddHistoryEntryDto request) {
         Errand errand = repo.findById(id)
@@ -230,31 +275,86 @@ public class ErrandService {
         return getById(id);
     }
 
-    private List<Long> parseCsvLongs(String csv) {
+    private List<String> parseCsvStrings(String csv) {
         if (csv == null || csv.isBlank()) {
             return List.of();
         }
 
         return Arrays.stream(csv.split(","))
                 .map(String::trim)
-                .filter(s -> !s.isBlank())
-                .map(Long::valueOf)
+                .filter(value -> !value.isBlank())
                 .toList();
     }
 
+    private int normalizePageSize(Integer size) {
+        if (size == null || size <= 0) {
+            return 20;
+        }
+
+        return Math.min(size, 200);
+    }
+
     private Sort.Direction parseDirection(String sortDir) {
-        return "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        return "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
     }
 
     private String mapSortField(String sortBy) {
-        if (sortBy == null || sortBy.isBlank() || "date".equalsIgnoreCase(sortBy)) {
+        if (sortBy == null || sortBy.isBlank()) {
             return "createdAt";
         }
 
-        if ("title".equalsIgnoreCase(sortBy)) {
-            return "title";
+        return switch (sortBy.toLowerCase()) {
+            case "date" -> "createdAt";
+            case "title" -> "title";
+            case "timespent" -> "timeSpent";
+            default -> throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid filter or sorting parameters"
+            );
+        };
+    }
+
+    private void validateStatuses(List<String> statuses) {
+        if (statuses == null || statuses.isEmpty()) {
+            return;
         }
 
-        throw new IllegalArgumentException("Invalid sortBy: " + sortBy);
+        final var validNames = statusRepo.findAll().stream()
+                .map(Status::getName)
+                .map(String::toLowerCase)
+                .toList();
+
+        final var invalid = statuses.stream()
+                .filter(status -> !validNames.contains(status.toLowerCase()))
+                .toList();
+
+        if (!invalid.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Ogiltig status: " + String.join(", ", invalid)
+            );
+        }
+    }
+
+    private void validatePriorities(List<String> priorities) {
+        if (priorities == null || priorities.isEmpty()) {
+            return;
+        }
+
+        final var validNames = priorityRepo.findAll().stream()
+                .map(Priority::getName)
+                .map(String::toLowerCase)
+                .toList();
+
+        final var invalid = priorities.stream()
+                .filter(priority -> !validNames.contains(priority.toLowerCase()))
+                .toList();
+
+        if (!invalid.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Ogiltig prioritet: " + String.join(", ", invalid)
+            );
+        }
     }
 }

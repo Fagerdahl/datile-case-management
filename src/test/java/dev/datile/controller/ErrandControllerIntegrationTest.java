@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -13,12 +14,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /* Integration test to verify controller > service > repo > DB > JSON
-* Test to verify that GET /api/errands?statusIds=1 returns errands only with status 1
-* This verifies that the statusIds-filter works correctly
-* */
+ * Test to verify that GET /api/errands?statusIds=1 returns errands only with status 1
+ * This verifies that the statusIds-filter works correctly
+ * */
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class ErrandControllerIntegrationTest {
 
     @Autowired
@@ -41,7 +43,7 @@ class ErrandControllerIntegrationTest {
         Cookie jwtCookie = result.getResponse().getCookie("jwt");
 
         mockMvc.perform(get("/api/errands")
-                        .param("statusIds", "1")
+                        .param("status", "Nytt")
                         .param("page", "0")
                         .param("size", "20")
                         .param("sortBy", "date")
@@ -49,6 +51,6 @@ class ErrandControllerIntegrationTest {
                         .cookie(jwtCookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.errands.length()").value(1))
-                .andExpect(jsonPath("$.errands[0].status.statusId").value(1));
+                .andExpect(jsonPath("$.errands[0].status.name").value("Nytt"));
     }
 }
