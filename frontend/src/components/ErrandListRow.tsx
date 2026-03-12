@@ -1,7 +1,7 @@
-import type {ErrandListItem} from "../types/errands";
-import {getPriorityStyles} from "../utils/priorityStyles";
+import type { ErrandListItem } from "../types/errands";
+import { getPriorityStyles } from "../utils/priorityStyles";
 
-/* React component to show errands in the list view */
+/* React component to show errands in a compact responsive list row */
 
 const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString(undefined, {
@@ -29,8 +29,7 @@ export const ErrandListRow = ({
     errand: ErrandListItem;
     onOpen: (errandId: number) => void;
 }) => {
-    const {name: priorityName, accentStyle, badgeStyle, valueStyle} =
-        getPriorityStyles(errand.priority);
+    const { name: priorityName, accentStyle, badgeStyle } = getPriorityStyles(errand.priority);
 
     const customerName = errand.customer?.name ?? "—";
     const assigneeName = errand.assignee?.name ?? "—";
@@ -50,7 +49,7 @@ export const ErrandListRow = ({
         <article
             role="button"
             tabIndex={0}
-            className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm cursor-pointer"
+            className="group relative border-b border-slate-200 bg-white transition hover:bg-slate-50"
             onClick={() => onOpen(errand.errandId)}
             onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
@@ -59,34 +58,48 @@ export const ErrandListRow = ({
                 }
             }}
         >
-            <div className="h-1 w-full" style={accentStyle}/>
+            <div className="absolute inset-y-0 left-0 w-1" style={accentStyle} />
 
-            <div className="grid gap-4 p-2 lg:grid-cols-[minmax(0,1.6fr)_160px_160px_120px_auto] lg:items-center">
-                <div className="min-w-0">
-                    <div className="truncate text-base font-semibold text-slate-900">
-                        <span className="text-slate-500">Ärende: </span>
-                        <span style={valueStyle}>{safe(errand.title)}</span>
+            <div className="px-4 py-3 pl-5">
+                <div className="sm:hidden">
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-semibold text-slate-900">
+                                {safe(errand.title)}
+                            </div>
+                            <div className="mt-0.5 text-xs text-slate-500">
+                                #{String(errand.errandId).padStart(3, "0")} · {safe(customerName)}
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            className="shrink-0 rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                onOpen(errand.errandId);
+                            }}
+                        >
+                            Visa
+                        </button>
                     </div>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
-                        <span>
-                            <span className="font-semibold text-slate-500">Prioritet: </span>
-                            <span
-                                className="inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold"
-                                style={badgeStyle}
-                            >
-                                {priorityName}
-                            </span>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <span
+                            className="inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                            style={badgeStyle}
+                        >
+                            {priorityName}
                         </span>
 
-                        <span>
-                            <span className="font-semibold text-slate-500">Status: </span>
-                            {safe(statusName)}
-                        </span>
+                        <span className="text-xs text-slate-600">{safe(statusName)}</span>
+                        <span className="text-xs text-slate-400">•</span>
+                        <span className="text-xs text-slate-600">{safe(assigneeName)}</span>
+                        <span className="text-xs text-slate-400">•</span>
+                        <span className="text-xs text-slate-600">{formatDate(errand.createdAt)}</span>
                     </div>
 
                     <div className="mt-2 truncate text-xs text-slate-500">
-                        <span className="font-semibold">Senaste historik: </span>
                         {latestHistory
                             ? `${safe(latestHistory.description)} · ${safe(
                                 latestHistory.verifiedName,
@@ -95,53 +108,52 @@ export const ErrandListRow = ({
                     </div>
                 </div>
 
-                <div className="min-w-0 text-sm">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                        Kund
+                <div className="hidden sm:grid sm:grid-cols-[90px_minmax(0,2fr)_140px_140px_120px_120px_120px] sm:items-center sm:gap-3">
+                    <div className="text-sm font-semibold text-slate-900">
+                        {String(errand.errandId).padStart(3, "0")}
                     </div>
-                    <div className="truncate font-medium text-slate-900">
-                        {safe(customerName)}
-                    </div>
-                </div>
 
-                <div className="min-w-0 text-sm">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                        Ansvarig
-                    </div>
-                    <div className="truncate font-medium text-slate-900">
-                        {safe(assigneeName)}
-                    </div>
-                </div>
-
-                <div className="text-sm">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                        Datum
-                    </div>
-                    <div className="font-medium text-slate-900">
-                        {formatDate(errand.createdAt)}
-                    </div>
-                </div>
-
-                <div className="flex h-full min-w-[110px] flex-col items-end justify-between gap-3">
-                    <div className="text-right text-sm">
-                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                            Ärende ID
+                    <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-slate-900">
+                            {safe(errand.title)}
                         </div>
-                        <div className="font-semibold text-slate-900">
-                            {String(errand.errandId).padStart(3, "0")}
+
+                        <div className="mt-1 truncate text-xs text-slate-500">
+                            {latestHistory
+                                ? `${safe(latestHistory.description)} · ${safe(
+                                    latestHistory.verifiedName,
+                                )} · ${formatDateTime(latestHistory.createdAt)}`
+                                : "Ingen historik än."}
                         </div>
                     </div>
 
-                    <button
-                        type="button"
-                        className="rounded-full bg-[#0A1633] px-4 py-0.5 text-sm font-semibold text-white transition hover:bg-[#13224A]"
-                        onClick={(event) => {
-                            event.stopPropagation();
-                            onOpen(errand.errandId);
-                        }}
-                    >
-                        Visa mer
-                    </button>
+                    <div className="truncate text-sm text-slate-800">{safe(customerName)}</div>
+                    <div className="truncate text-sm text-slate-800">{safe(assigneeName)}</div>
+                    <div className="truncate text-sm text-slate-800">{safe(statusName)}</div>
+
+                    <div>
+                        <span
+                            className="inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                            style={badgeStyle}
+                        >
+                            {priorityName}
+                        </span>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3">
+                        <div className="text-sm text-slate-800">{formatDate(errand.createdAt)}</div>
+
+                        <button
+                            type="button"
+                            className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                onOpen(errand.errandId);
+                            }}
+                        >
+                            Visa
+                        </button>
+                    </div>
                 </div>
             </div>
         </article>
