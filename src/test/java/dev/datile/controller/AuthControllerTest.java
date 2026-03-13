@@ -58,4 +58,16 @@ public class AuthControllerTest {
                 .andExpect(content().string("{\"username\":\"user@gmail.com\"}"));
     }
 
+    @Test
+    void me_should_return_401_when_not_present() throws Exception {
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void errands_should_return_401_when_not_present() throws Exception {
+        mockMvc.perform(get("/api/errands"))
+                .andExpect(status().isUnauthorized());
+    }
+
 }
