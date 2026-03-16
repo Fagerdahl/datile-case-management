@@ -80,13 +80,13 @@ export type ReportFilters = {
 };
 
 export const reportSortOptions: Array<{ value: ReportSortBy; label: string }> = [
-    { value: "customer", label: "Kund" },
-    { value: "contact", label: "Namn" },
-    { value: "title", label: "Rubrik" },
-    { value: "status", label: "Status" },
-    { value: "priority", label: "Prioritet" },
-    { value: "timeSpent", label: "Tidsåtgång" },
-    { value: "assignee", label: "Ansvarig" },
+    {value: "customer", label: "Kund"},
+    {value: "contact", label: "Namn"},
+    {value: "title", label: "Rubrik"},
+    {value: "status", label: "Status"},
+    {value: "priority", label: "Prioritet"},
+    {value: "timeSpent", label: "Tidsåtgång"},
+    {value: "assignee", label: "Ansvarig"},
 ];
 
 const toDateInputValue = (date: Date) => {

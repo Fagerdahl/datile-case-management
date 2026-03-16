@@ -39,3 +39,22 @@ export const fetchReports = async (filters: ReportFilters) =>
     apiClient.get<ReportsResponse>("/reports", {
         params: buildReportParams(filters),
     });
+
+export const exportReportsCsv = async (filters: ReportFilters): Promise<Blob> => {
+    const params = new URLSearchParams();
+
+    Object.entries(buildReportParams(filters)).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+            params.set(key, String(value));
+        }
+    });
+
+    const response = await fetch(`/api/reports/export/csv?${params.toString()}`);
+
+    if (!response.ok) {
+        const body = await response.text();
+        throw new Error(body || `Export failed (${response.status})`);
+    }
+
+    return response.blob();
+};

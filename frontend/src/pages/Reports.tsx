@@ -1,19 +1,20 @@
-import { useEffect, useState } from "react";
-import { fetchReports } from "../api/reportsApi";
+import {useEffect, useState} from "react";
+import {exportReportsCsv, fetchReports} from "../api/reportsApi";
 import {
     fetchAssignees,
     fetchCustomers,
     fetchPriorities,
     fetchStatuses,
 } from "../api/LookupsApi";
-import { ReportFilterPanel } from "../components/ReportFilterPanel";
-import { ReportListRow } from "../components/ReportListRow";
-import { ReportPagination } from "../components/ReportPagination";
+import {ReportFilterPanel} from "../components/ReportFilterPanel";
+import {ReportListRow} from "../components/ReportListRow";
+import {ReportPagination} from "../components/ReportPagination";
 import {
     createInitialReportFilters,
     type ReportFilters,
     type ReportsResponse,
 } from "../types/reports";
+
 
 type FilterOption = {
     value: number;
@@ -26,6 +27,7 @@ export default function Reports() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+    const [exporting, setExporting] = useState(false);
 
     const [customerOptions, setCustomerOptions] = useState<FilterOption[]>([]);
     const [assigneeOptions, setAssigneeOptions] = useState<FilterOption[]>([]);
@@ -135,10 +137,35 @@ export default function Reports() {
         setExpandedRows(new Set());
     };
 
+    const handleExportCsv = async () => {
+        try {
+            setExporting(true);
+            setError(null);
+
+            const blob = await exportReportsCsv(filters);
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.download = "reports.csv";
+
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Export failed");
+        } finally {
+            setExporting(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-stone-100">
             <div className="mx-auto max-w-7xl px-4 pb-8 pt-14 sm:px-6 sm:pb-10 sm:pt-16">
-                <div className="mb-4 rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm backdrop-blur sm:mb-5 sm:p-4">
+                <div
+                    className="mb-4 rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm backdrop-blur sm:mb-5 sm:p-4">
                     <div className="space-y-0.5">
                         <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
                             Rapporter
@@ -182,12 +209,14 @@ export default function Reports() {
                         </div>
 
                         {data.reports.length === 0 ? (
-                            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500 shadow-sm">
+                            <div
+                                className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500 shadow-sm">
                                 Inga ärenden matchar dina filter.
                             </div>
                         ) : (
                             <>
-                                <div className="hidden rounded-t-2xl border border-slate-200 border-b-0 bg-slate-100 px-5 py-3 sm:grid sm:grid-cols-[56px_80px_minmax(0,1.6fr)_160px_130px_130px_90px_110px_130px] sm:gap-3">
+                                <div
+                                    className="hidden rounded-t-2xl border border-slate-200 border-b-0 bg-slate-100 px-5 py-3 sm:grid sm:grid-cols-[56px_80px_minmax(0,1.6fr)_160px_130px_130px_90px_110px_130px] sm:gap-3">
                                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                                     </div>
                                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
@@ -216,7 +245,8 @@ export default function Reports() {
                                     </div>
                                 </div>
 
-                                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-t-none">
+                                <div
+                                    className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-t-none">
                                     {data.reports.map((report) => (
                                         <ReportListRow
                                             key={report.errandId}
@@ -226,17 +256,29 @@ export default function Reports() {
                                         />
                                     ))}
                                 </div>
+                                <div className="mt-8">
+                                    <ReportPagination
+                                        page={data.page}
+                                        totalPages={data.totalPages}
+                                        onPageChange={(page) =>
+                                            setFilters((current) => ({
+                                                ...current,
+                                                page,
+                                            }))
+                                        }
+                                    />
 
-                                <ReportPagination
-                                    page={data.page}
-                                    totalPages={data.totalPages}
-                                    onPageChange={(page) =>
-                                        setFilters((current) => ({
-                                            ...current,
-                                            page,
-                                        }))
-                                    }
-                                />
+                                    <div className="mt-6 flex justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={handleExportCsv}
+                                            disabled={exporting}
+                                            className="inline-flex min-w-[220px] items-center justify-center rounded-4xl bg-slate-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {exporting ? "Exporterar..." : "Exportera CSV"}
+                                        </button>
+                                    </div>
+                                </div>
                             </>
                         )}
                     </>

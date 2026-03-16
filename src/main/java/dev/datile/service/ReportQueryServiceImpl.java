@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/* Pulls and filters data */
+
 @Service
 public class ReportQueryServiceImpl implements ReportQueryService {
 
