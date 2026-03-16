@@ -1,10 +1,6 @@
 import { useState } from "react";
 import type { Permissions, Role, User } from "../types/users";
-import {apiClient} from "../services/apiClient.ts";
-
-type Password = {
-    password: string;
-}
+import { NewUserForm } from "../components";
 
 const rolePermissions: Record<Role, Permissions> = {
     ADMIN: {
@@ -36,10 +32,6 @@ const mockUsers: User[] = [
 export default function Users() {
     const [users] = useState<User[]>(mockUsers);
     const [drawerOpen, setDrawerOpen] = useState(false);
-    const [selectedRole, setSelectedRole] = useState<Role>("USER");
-    const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-
     const Check = ({ value }: { value: boolean }) => (
         <span
             className={`text-2xl font-bold ${
@@ -256,106 +248,7 @@ export default function Users() {
                     />
 
                     {/* DRAWER */}
-                    <div className="w-full sm:w-[380px] bg-white border-l border-slate-200 shadow-xl p-6 overflow-y-auto">
-
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-lg font-semibold">
-                                Ny användare
-                            </h2>
-
-                            <button onClick={() => setDrawerOpen(false)}>
-                                ✕
-                            </button>
-                        </div>
-
-                        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-
-                            <div>
-                                <label className="text-sm text-slate-600">
-                                    Namn
-                                </label>
-                                <input type={`text`} className="mt-1 w-full rounded-full border border-[#d2d2d2] px-3 py-2 text-sm" />
-                            </div>
-
-                            <div>
-                                <label className="text-sm text-slate-600">
-                                    E-postadress
-                                </label>
-                                <input type={`email`} className="mt-1 w-full rounded-full border border-[#d2d2d2] px-3 py-2 text-sm" />
-                            </div>
-
-                            <div>
-                                <label className="text-sm text-slate-600">
-                                    Lösenord
-                                </label>
-
-
-                                <button onClick={() => setShowPassword(!showPassword)} className="ml-10 text-xs text-slate-500 hover:text-slate-700" >
-                                    Visa lösenord
-                                </button>
-                                <div className="mt-1 flex gap-2">
-                                    <input
-                                        type={showPassword ? "text" : "password"}
-                                        className="flex-1 rounded-full border border-[#d2d2d2] px-3 py-2 text-sm"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                    />
-
-                                    <button
-                                        type="button"
-                                        className="rounded-full border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 whitespace-nowrap"
-                                        onClick={() => {
-                                           async function generatePassword() {
-                                               const randomPassword = await apiClient.get<Password>(`/api/users/password`);
-                                               setPassword(randomPassword.password)
-                                           }
-                                           generatePassword();
-                                        }}
-                                    >
-                                        Generera lösenord
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="text-sm text-slate-600">
-                                    Roll
-                                </label>
-
-                                <div className="flex gap-2 mt-2">
-
-                                    <button
-                                        onClick={() => setSelectedRole("USER")}
-                                        className={`px-3 py-1 rounded-full text-sm ${
-    selectedRole === "USER"
-        ? "bg-slate-900 text-white"
-        : "bg-slate-200"
-}`}
-                                    >
-                                        User
-                                    </button>
-
-                                    <button
-                                        onClick={() => setSelectedRole("ADMIN")}
-                                        className={`px-3 py-1 rounded-full text-sm ${
-    selectedRole === "ADMIN"
-        ? "bg-purple-600 text-white"
-        : "bg-purple-100 text-purple-700"
-}`}
-                                    >
-                                        Admin
-                                    </button>
-
-                                </div>
-                            </div>
-
-                            <button className="mt-6 w-full rounded-full bg-[#99D0B6] py-2 text-white font-semibold">
-                                Spara
-                            </button>
-
-                        </form>
-
-                    </div>
+                    <NewUserForm setDrawerOpen={setDrawerOpen}/>
                 </div>
             )}
 
