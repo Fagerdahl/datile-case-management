@@ -1,18 +1,28 @@
 package dev.datile.controller;
 
+import dev.datile.domain.User;
+import dev.datile.dto.users.NewUserDto;
+import dev.datile.service.UserService;
 import org.passay.CharacterData;
 import org.passay.CharacterRule;
 import org.passay.EnglishCharacterData;
 import org.passay.PasswordGenerator;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
+
+    UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping("/password")
     public Map<String, String> getPassword() {
@@ -45,5 +55,12 @@ public class UserController {
                 upperCaseRule, digitRule);
 
         return Map.of("password", password);
+    }
+
+    @PostMapping
+    public ResponseEntity<?> createUser(@RequestBody NewUserDto user) {
+        User u = userService.saveUser(user);
+
+        return ResponseEntity.ok(Map.of("User", u));
     }
 }

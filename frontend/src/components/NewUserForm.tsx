@@ -41,6 +41,17 @@ export default function NewUserForm({
 
         setError(false);
 
+        try {
+            const response = await apiClient.post<User>("/api/users", {
+                name: name,
+                email,
+                role: selectedRole,
+                password,
+            });
+            console.log(response)
+        } catch (error) {
+            setError(true);
+        }
 
     }
 
@@ -70,12 +81,6 @@ export default function NewUserForm({
                     saveUser(e);
                 }}
                 onChange={() => {
-                    if (password.trim() && name.trim() && email.trim()) {
-                        setError(false);
-                    }
-                    else {
-                        setError(true);
-                    }
                 }}
             >
 
