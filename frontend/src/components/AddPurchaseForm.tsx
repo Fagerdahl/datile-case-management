@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { addPurchase } from "../api/errandsApi";
 
 type AddPurchaseFormProps = {
@@ -19,6 +19,30 @@ export const AddPurchaseForm = ({
     const [salePrice, setSalePrice] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isHighlighted, setIsHighlighted] = useState(true);
+
+    const containerRef = useRef<HTMLElement | null>(null);
+    const firstInputRef = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+        containerRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+        });
+
+        const focusTimer = window.setTimeout(() => {
+            firstInputRef.current?.focus();
+        }, 250);
+
+        const highlightTimer = window.setTimeout(() => {
+            setIsHighlighted(false);
+        }, 1800);
+
+        return () => {
+            window.clearTimeout(focusTimer);
+            window.clearTimeout(highlightTimer);
+        };
+    }, []);
 
     const parsedQuantity = Number(quantity);
     const parsedPurchasePrice = Number(purchasePrice);
@@ -99,7 +123,15 @@ export const AddPurchaseForm = ({
     };
 
     return (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5">
+        <section
+            ref={containerRef}
+            className={[
+                "rounded-2xl bg-white p-5 transition-all duration-500",
+                isHighlighted
+                    ? "border border-[#99D0B6] ring-4 ring-[#99D0B6]/25 shadow-sm"
+                    : "border border-slate-200",
+            ].join(" ")}
+        >
             <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
                 Nytt inköp
             </h3>
@@ -110,6 +142,7 @@ export const AddPurchaseForm = ({
                         Vad som köpts
                     </label>
                     <input
+                        ref={firstInputRef}
                         type="text"
                         value={itemName}
                         onChange={(event) => setItemName(event.target.value)}
@@ -197,11 +230,11 @@ export const AddPurchaseForm = ({
                     </div>
                 </div>
 
-                {error && (
+                {error ? (
                     <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                         {error}
                     </div>
-                )}
+                ) : null}
 
                 <div className="flex gap-3">
                     <button

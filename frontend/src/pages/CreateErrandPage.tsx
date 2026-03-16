@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useMemo, useState, type ChangeEvent} from "react";
 import {useNavigate} from "react-router-dom";
 import {addErrandHistoryEntry, createErrand} from "../api/errandsApi";
 import {
@@ -7,11 +7,11 @@ import {
     fetchCustomers,
     fetchPriorities,
     fetchStatuses,
-    type AssigneeOption,
-    type ContactOption,
-    type CustomerOption,
-    type PriorityOption,
-    type StatusOption,
+    type AssigneeLookup,
+    type ContactLookup,
+    type CustomerLookup,
+    type PriorityLookup,
+    type StatusLookup,
 } from "../api/LookupsApi";
 
 type PurchaseFormValue = {
@@ -72,7 +72,7 @@ const isPositiveInteger = (value: string) => {
     return Number.isInteger(parsed) && parsed > 0;
 };
 
-const contactLabel = (contact: ContactOption) =>
+const contactLabel = (contact: ContactLookup) =>
     `${contact.firstName} ${contact.lastName}`.trim() ||
     contact.mail ||
     `Kontakt ${contact.contactId}`;
@@ -163,11 +163,11 @@ export default function CreateErrandPage() {
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submitWarning, setSubmitWarning] = useState<string | null>(null);
 
-    const [statuses, setStatuses] = useState<StatusOption[]>([]);
-    const [priorities, setPriorities] = useState<PriorityOption[]>([]);
-    const [assignees, setAssignees] = useState<AssigneeOption[]>([]);
-    const [customers, setCustomers] = useState<CustomerOption[]>([]);
-    const [contacts, setContacts] = useState<ContactOption[]>([]);
+    const [statuses, setStatuses] = useState<StatusLookup[]>([]);
+    const [priorities, setPriorities] = useState<PriorityLookup[]>([]);
+    const [assignees, setAssignees] = useState<AssigneeLookup[]>([]);
+    const [customers, setCustomers] = useState<CustomerLookup[]>([]);
+    const [contacts, setContacts] = useState<ContactLookup[]>([]);
 
     const [isLoadingLookups, setIsLoadingLookups] = useState(true);
     const [lookupError, setLookupError] = useState("");
@@ -200,15 +200,29 @@ export default function CreateErrandPage() {
             ] = results;
 
             const loadedStatuses =
-                statusesResult.status === "fulfilled" ? statusesResult.value : [];
+                statusesResult.status === "fulfilled"
+                    ? (statusesResult.value as StatusLookup[])
+                    : [];
+
             const loadedPriorities =
-                prioritiesResult.status === "fulfilled" ? prioritiesResult.value : [];
+                prioritiesResult.status === "fulfilled"
+                    ? (prioritiesResult.value as PriorityLookup[])
+                    : [];
+
             const loadedAssignees =
-                assigneesResult.status === "fulfilled" ? assigneesResult.value : [];
+                assigneesResult.status === "fulfilled"
+                    ? (assigneesResult.value as AssigneeLookup[])
+                    : [];
+
             const loadedCustomers =
-                customersResult.status === "fulfilled" ? customersResult.value : [];
+                customersResult.status === "fulfilled"
+                    ? (customersResult.value as CustomerLookup[])
+                    : [];
+
             const loadedContacts =
-                contactsResult.status === "fulfilled" ? contactsResult.value : [];
+                contactsResult.status === "fulfilled"
+                    ? (contactsResult.value as ContactLookup[])
+                    : [];
 
             setStatuses(loadedStatuses);
             setPriorities(loadedPriorities);
@@ -305,7 +319,7 @@ export default function CreateErrandPage() {
     }, [values.customerId, values.contactId, contacts]);
 
     const handleFieldChange = (
-        event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+        event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
     ) => {
         const {name, value} = event.target;
 
@@ -320,7 +334,7 @@ export default function CreateErrandPage() {
         }));
     };
 
-    const handleCustomerChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const handleCustomerChange = (event: ChangeEvent<HTMLSelectElement>) => {
         const nextCustomerId = event.target.value;
 
         setValues((current) => ({
@@ -434,7 +448,7 @@ export default function CreateErrandPage() {
 
     return (
         <div className="min-h-screen bg-stone-100 p-4">
-            <div className="mx-auto max-w-7xl">
+            <div className="mx-auto max-w-[1600px]">
                 <div className="mb-6">
                     <p className="text-sm text-slate-500">Ärenden / Skapa ärende</p>
                     <h1 className="mt-2 text-3xl font-bold text-slate-900">Skapa ärende</h1>
@@ -892,8 +906,7 @@ export default function CreateErrandPage() {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="rounded-full px-8 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#88c3a7] disabled:opacity-50"
-                            style={{backgroundColor: "#99D0B6"}}
+                            className="rounded-full bg-[#79C6A3] px-10 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#69b894] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {isSubmitting ? "Sparar..." : "Spara ärende"}
                         </button>

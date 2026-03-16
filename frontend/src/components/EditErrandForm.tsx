@@ -11,11 +11,11 @@ import {
     fetchCustomers,
     fetchPriorities,
     fetchStatuses,
-    type AssigneeOption,
-    type ContactOption,
-    type CustomerOption,
-    type PriorityOption,
-    type StatusOption,
+    type AssigneeLookup,
+    type ContactLookup,
+    type CustomerLookup,
+    type PriorityLookup,
+    type StatusLookup,
 } from "../api/LookupsApi";
 import type {ErrandDetails} from "../types/errands";
 import {AddPurchaseForm} from "./AddPurchaseForm";
@@ -24,6 +24,7 @@ type EditErrandFormProps = {
     errand: ErrandDetails;
     onCancel: () => void;
     onSaved: (updatedErrand: ErrandDetails) => void;
+    startWithPurchaseFormOpen?: boolean;
 };
 
 const formatDate = (iso?: string | null) => {
@@ -65,7 +66,7 @@ const parseNullableNumber = (value: string) => {
     return Number.isNaN(parsed) ? NaN : parsed;
 };
 
-const contactLabel = (contact: ContactOption) =>
+const contactLabel = (contact: ContactLookup) =>
     `${contact.firstName} ${contact.lastName}`.trim() ||
     contact.mail ||
     `Kontakt ${contact.contactId}`;
@@ -82,6 +83,7 @@ export const EditErrandForm = ({
                                    errand,
                                    onCancel,
                                    onSaved,
+                                   startWithPurchaseFormOpen = false,
                                }: EditErrandFormProps) => {
     const [title, setTitle] = useState(errand.title);
     const [description, setDescription] = useState(errand.description ?? "");
@@ -108,15 +110,15 @@ export const EditErrandForm = ({
     const [historyItems, setHistoryItems] = useState(errand.history ?? []);
 
     const [purchases, setPurchases] = useState(errand.purchases ?? []);
-    const [isAddingPurchase, setIsAddingPurchase] = useState(false);
+    const [isAddingPurchase, setIsAddingPurchase] = useState(startWithPurchaseFormOpen);
     const [purchaseIdToDelete, setPurchaseIdToDelete] = useState<number | null>(null);
     const [isDeletingPurchase, setIsDeletingPurchase] = useState(false);
 
-    const [statuses, setStatuses] = useState<StatusOption[]>([]);
-    const [priorities, setPriorities] = useState<PriorityOption[]>([]);
-    const [assignees, setAssignees] = useState<AssigneeOption[]>([]);
-    const [customers, setCustomers] = useState<CustomerOption[]>([]);
-    const [contacts, setContacts] = useState<ContactOption[]>([]);
+    const [statuses, setStatuses] = useState<StatusLookup[]>([]);
+    const [priorities, setPriorities] = useState<PriorityLookup[]>([]);
+    const [assignees, setAssignees] = useState<AssigneeLookup[]>([]);
+    const [customers, setCustomers] = useState<CustomerLookup[]>([]);
+    const [contacts, setContacts] = useState<ContactLookup[]>([]);
 
     const [isLoadingLookups, setIsLoadingLookups] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -136,10 +138,10 @@ export const EditErrandForm = ({
         setHistoryItems(errand.history ?? []);
         setPurchases(errand.purchases ?? []);
         setNewHistoryEntry("");
-        setIsAddingPurchase(false);
+        setIsAddingPurchase(startWithPurchaseFormOpen);
         setPurchaseIdToDelete(null);
         setSubmitError("");
-    }, [errand]);
+    }, [errand, startWithPurchaseFormOpen]);
 
     useEffect(() => {
         let alive = true;
@@ -221,7 +223,6 @@ export const EditErrandForm = ({
         const updatedErrand = await fetchErrandById(errand.errandId);
         setHistoryItems(updatedErrand.history ?? []);
         setPurchases(updatedErrand.purchases ?? []);
-        onSaved(updatedErrand);
     };
 
     const handleDeletePurchaseClick = (purchaseId: number) => {
@@ -274,7 +275,6 @@ export const EditErrandForm = ({
 
             setHistoryItems(updatedErrand.history ?? []);
             setNewHistoryEntry("");
-            onSaved(updatedErrand);
         } catch (error) {
             if (error instanceof Error && error.message.trim()) {
                 setSubmitError(`Kunde inte lägga till historikrad. ${error.message}`);
@@ -773,8 +773,7 @@ export const EditErrandForm = ({
                 <button
                     type="submit"
                     disabled={isSaving || isAddingHistory || isDeletingPurchase}
-                    className="rounded-full px-8 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#88c3a7] disabled:opacity-50"
-                    style={{backgroundColor: "#99D0B6"}}
+                    className="rounded-full bg-[#6FBE98] px-10 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#5fb189] focus:outline-none focus:ring-2 focus:ring-[#6FBE98]/40 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {isSaving ? "Sparar..." : "Spara ärende"}
                 </button>

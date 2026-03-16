@@ -38,11 +38,9 @@ export type ReportAssignee = {
 
 export type ReportPurchase = {
     purchaseId: number;
-    purchase: string;
+    itemName: string;
     quantity: number;
-    price: number;
-    shipping: number;
-    outprice: number;
+    salePrice: number;
 };
 
 export type ReportListItem = {

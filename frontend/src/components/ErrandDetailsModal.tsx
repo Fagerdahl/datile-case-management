@@ -3,13 +3,13 @@ import type {CSSProperties, ReactNode} from "react";
 import {fetchErrandById} from "../api/errandsApi";
 import {EditErrandForm} from "./EditErrandForm";
 import type {ErrandDetails} from "../types/errands";
-import {AddPurchaseForm} from "./AddPurchaseForm";
 
 type ErrandDetailsModalProps = {
     errandId: number;
     mode: "view" | "edit";
     onClose: () => void;
     onErrandUpdated: (updatedErrand: ErrandDetails) => void;
+    startWithPurchaseFormOpen?: boolean;
 };
 
 const formatDate = (iso?: string | null) => {
@@ -129,25 +129,26 @@ export const ErrandDetailsModal = ({
                                        mode,
                                        onClose,
                                        onErrandUpdated,
+                                       startWithPurchaseFormOpen = false,
                                    }: ErrandDetailsModalProps) => {
     const [data, setData] = useState<ErrandDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(mode === "edit");
-    const [isAddingPurchase, setIsAddingPurchase] = useState(false);
+    const [openPurchaseFormOnEdit, setOpenPurchaseFormOnEdit] = useState(startWithPurchaseFormOpen);
 
     const dialogRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         setIsEditing(mode === "edit");
-    }, [mode, errandId]);
+        setOpenPurchaseFormOnEdit(startWithPurchaseFormOpen);
+    }, [mode, errandId, startWithPurchaseFormOpen]);
 
     useEffect(() => {
         let alive = true;
 
         const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
-        setIsAddingPurchase(false);
 
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
@@ -207,11 +208,6 @@ export const ErrandDetailsModal = ({
         onErrandUpdated(updatedErrand);
     };
 
-    const reloadErrand = async () => {
-        const updated = await fetchErrandById(errandId);
-        setData(updated);
-    };
-
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
@@ -267,8 +263,12 @@ export const ErrandDetailsModal = ({
                     ) : isEditing ? (
                         <EditErrandForm
                             errand={data}
-                            onCancel={() => setIsEditing(false)}
+                            onCancel={() => {
+                                setIsEditing(false);
+                                setOpenPurchaseFormOnEdit(false);
+                            }}
                             onSaved={handleSaved}
+                            startWithPurchaseFormOpen={openPurchaseFormOnEdit}
                         />
                     ) : (
                         <div className="space-y-6">
@@ -453,26 +453,15 @@ export const ErrandDetailsModal = ({
                                         <div className="flex flex-col gap-3">
                                             <button
                                                 type="button"
-                                                onClick={() => setIsAddingPurchase((current) => !current)}
+                                                onClick={() => {
+                                                    setOpenPurchaseFormOnEdit(false);
+                                                    setIsEditing(true);
+                                                }}
                                                 className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-6 py-2 text-sm font-semibold text-[#E85D5D] shadow-[0_2px_6px_rgba(15,23,42,0.12)] transition hover:bg-slate-50"
                                             >
-                                                <span className="mr-2 text-base leading-none text-slate-700">
-                                                    {isAddingPurchase ? "–" : "+"}
-                                                </span>
-                                                {isAddingPurchase ? "Lägg till inköp" : "Lägg till inköp"}
+                                                <span className="mr-2 text-base leading-none text-slate-700">+</span>
+                                                Lägg till inköp
                                             </button>
-
-                                            {isAddingPurchase ? (
-                                                <AddPurchaseForm
-                                                    errandId={errandId}
-                                                    onSaved={async () => {
-                                                        await reloadErrand();
-                                                        setIsAddingPurchase(false);
-                                                    }}
-                                                    onCancel={() => setIsAddingPurchase(false)}
-                                                />
-                                            ) : null}
-
                                             <button
                                                 type="button"
                                                 className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
