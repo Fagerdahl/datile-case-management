@@ -55,6 +55,6 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        return ResponseEntity.ok(Map.of("username", authentication.getName()));
+        return ResponseEntity.ok(Map.of("email", authentication.getName()));
     }
 }

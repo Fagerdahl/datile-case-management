@@ -2,6 +2,7 @@ package dev.datile.controller;
 
 import dev.datile.domain.User;
 import dev.datile.dto.users.NewUserDto;
+import dev.datile.dto.users.UserResponse;
 import dev.datile.service.UserService;
 import org.passay.CharacterData;
 import org.passay.CharacterRule;
@@ -34,7 +35,7 @@ public class UserController {
 
         try {
             User u = userService.saveUser(user);
-            return ResponseEntity.ok(Map.of("user", u));
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("user", new UserResponse(u.getName(), u.getEmail(), u.getRole())));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Användare finns redan"));
         }
