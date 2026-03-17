@@ -5,10 +5,12 @@ import dev.datile.dto.errands.AssigneeDto;
 import dev.datile.repository.AssigneeRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/assignees")
@@ -31,8 +33,7 @@ public class AssigneeController {
     }
 
     @PostMapping
-    public AssigneeDto createAssignee(@RequestBody AssigneeDto dto) {
-        System.out.println("CREATE ASSIGNEE HIT");
+    public ResponseEntity<?> createAssignee(@RequestBody AssigneeDto dto) {
 
         if (assigneeRepository.existsByNameIgnoreCase(dto.name())) {
             throw new ResponseStatusException(
@@ -45,17 +46,15 @@ public class AssigneeController {
 
         var saved = assigneeRepository.save(assignee);
 
-        return new AssigneeDto(
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("assignee", new AssigneeDto(
                 saved.getAssigneeId(),
-                saved.getName()
+                saved.getName()))
         );
     }
 
     @PutMapping("/{id}")
-    public AssigneeDto updateAssignee(@PathVariable Long id,
-                                      @RequestBody AssigneeDto dto) {
+    public ResponseEntity<?> updateAssignee(@PathVariable Long id, @RequestBody AssigneeDto dto) {
 
-        System.out.println("CREATE ASSIGNEE HIT");
         var assignee = assigneeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -75,9 +74,9 @@ public class AssigneeController {
 
         var saved = assigneeRepository.save(assignee);
 
-        return new AssigneeDto(
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("assignee", new AssigneeDto(
                 saved.getAssigneeId(),
-                saved.getName()
+                saved.getName()))
         );
     }
 }

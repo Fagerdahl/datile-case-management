@@ -11,6 +11,7 @@ import org.passay.PasswordGenerator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -33,25 +34,25 @@ public class UserController {
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody NewUserDto user) {
 
-        try {
-            User u = userService.saveUser(user);
-            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("user", new UserResponse(u.getName(), u.getEmail(), u.getRole())));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Användare finns redan"));
+        if (userService.userExists(user.email())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Användare finns redan"
+            );
         }
+
+        User u = userService.saveUser(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("user", new UserResponse(u.getId(), u.getName(), u.getEmail(), u.getRole())));
 
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody NewUserDto user) {
-
-        try {
-            User updated = userService.updateUser(id, user);
-            return ResponseEntity.ok(Map.of("user", updated));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
-        }
+        User updated = userService.updateUser(id, user);
+        return ResponseEntity.ok(Map.of(
+                "user",
+                new UserResponse(id, updated.getName(), updated.getEmail(), updated.getRole())
+        ));
     }
 
     @GetMapping("/password")

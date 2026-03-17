@@ -1,5 +1,10 @@
 package dev.datile.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.datile.domain.Assignee;
+import dev.datile.domain.User;
+import dev.datile.dto.users.UserResponse;
 import jakarta.servlet.http.Cookie;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,8 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,6 +33,9 @@ public class UserControllerTest {
 
     @Autowired
     Flyway flyway;
+
+    @Autowired
+    ObjectMapper objectMapper;
 
     Cookie jwtCookie;
 
@@ -60,7 +68,7 @@ public class UserControllerTest {
         mockMvc.perform(get("/api/users")
                         .cookie(jwtCookie))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.name == 'jimmy')]").exists());
+                .andExpect(jsonPath("$[0].name").value("jimmy"));
     }
 
     @Test
@@ -86,5 +94,73 @@ public class UserControllerTest {
                         .cookie(jwtCookie))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.user.name").value("johan"));
+    }
+
+    @Test
+    void post_existing_user_should_return_409() throws Exception {
+        String body = """
+                {
+                    "name": "johan",
+                    "email": "johan@gmail.com",
+                    "password": "password",
+                    "role": "ADMIN"
+                }
+                """;
+
+        mockMvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .cookie(jwtCookie))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .cookie(jwtCookie))
+                .andExpect(status().isConflict());
+
+    }
+
+    @Test
+    void put_user_should_return_ok() throws Exception {
+        String body = """
+                {
+                    "name": "johan",
+                    "email": "johan@gmail.com",
+                    "password": "password",
+                    "role": "ADMIN"
+                }
+                """;
+
+        MvcResult result = mockMvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .cookie(jwtCookie))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String json = result.getResponse().getContentAsString();
+
+        JsonNode root = objectMapper.readTree(json);
+        JsonNode userNode = root.get("user");
+
+        UserResponse user = objectMapper.treeToValue(userNode, UserResponse.class);
+        Long id = user.id();
+
+        String changed_body = """
+                {
+                    "name": "john",
+                    "email": "john@gmail.com",
+                    "password": "password",
+                    "role": "ADMIN"
+                }
+                """;
+
+        mockMvc.perform(put("/api/users/" + id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(changed_body)
+                .cookie(jwtCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.name").value("john"));
     }
 }
