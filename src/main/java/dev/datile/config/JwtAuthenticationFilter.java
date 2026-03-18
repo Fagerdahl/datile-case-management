@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,32 +32,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain chain
     ) throws ServletException, IOException {
 
-        String token = null;
-        Cookie[] cookies = request.getCookies();
+        String token = extractJwtFromCookies(request);
 
-        // Extract JWT from cookie
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if ("jwt".equals(cookie.getName())) {
-                    token = cookie.getValue();
-                    break;
-                }
-            }
-        }
+        if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            try {
+                String username = jwtService.extractUsername(token);
 
-        if (token != null) {
+                if (username != null && jwtService.validateToken(token, username)) {
 
-            String username = jwtService.getUsernameFromToken(token);
+                    String role = jwtService.getRoleFromToken(token);
 
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    // ✅ critical safety
+                    if (role == null) {
+                        chain.doFilter(request, response);
+                        return;
+                    }
 
-                if (jwtService.validateToken(token, username)) {
+                    var authorities = List.of(
+                            new SimpleGrantedAuthority("ROLE_" + role)
+                    );
 
                     UsernamePasswordAuthenticationToken auth =
                             new UsernamePasswordAuthenticationToken(
                                     username,
                                     null,
-                                    List.of()
+                                    authorities
                             );
 
                     auth.setDetails(
@@ -65,9 +65,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
+
+            } catch (Exception ignored) {
             }
         }
 
         chain.doFilter(request, response);
+    }
+
+    private String extractJwtFromCookies(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+
+        if (cookies == null) return null;
+
+        for (Cookie cookie : cookies) {
+            if ("jwt".equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+
+        return null;
     }
 }
