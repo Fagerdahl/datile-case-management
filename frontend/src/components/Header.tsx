@@ -1,9 +1,6 @@
 import {NavLink} from "react-router-dom";
 import type {NavLinkRenderProps} from "react-router-dom";
 import {useState, useEffect} from "react";
-import { NavLink } from "react-router-dom";
-import type { NavLinkRenderProps } from "react-router-dom";
-import { useState } from "react";
 import {apiClient} from "../services/apiClient.ts";
 
 export default function Header() {
