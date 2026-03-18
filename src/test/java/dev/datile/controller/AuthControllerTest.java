@@ -25,7 +25,7 @@ public class AuthControllerTest {
     void login_should_return_jwt() throws Exception {
         String body = """
                 {
-                    "username": "admin@gmail.com",
+                    "email": "jimmy@gmail.com",
                     "password": "password"
                 }
                 """;
@@ -41,7 +41,7 @@ public class AuthControllerTest {
     void me_should_return_username_when_present() throws Exception {
         String body = """
                 {
-                    "username": "user@gmail.com",
+                    "email": "ronja@gmail.com",
                     "password": "password"
                 }
                 """;
@@ -55,7 +55,7 @@ public class AuthControllerTest {
         mockMvc.perform(get("/api/auth/me")
                         .cookie(jwtCookie))
                 .andExpect(status().isOk())
-                .andExpect(content().string("{\"username\":\"user@gmail.com\"}"));
+                .andExpect(content().string("{\"email\":\"ronja@gmail.com\"}"));
     }
 
     @Test
@@ -66,6 +66,55 @@ public class AuthControllerTest {
 
     @Test
     void errands_should_return_401_when_not_present() throws Exception {
+        mockMvc.perform(get("/api/errands"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logout_should_remove_jwt_cookie() throws Exception {
+        String body = """
+                {
+                    "email": "viktor@gmail.com",
+                    "password": "password"
+                }
+                """;
+        MvcResult result =  mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(cookie().exists("jwt"))
+                .andReturn();
+
+        Cookie jwtCookie = result.getResponse().getCookie("jwt");
+
+        mockMvc.perform(post("/api/auth/logout")
+                .cookie(jwtCookie))
+                .andExpect(status().isOk())
+                .andExpect(cookie().value("jwt", ""))
+                .andExpect(cookie().maxAge("jwt", 0));
+    }
+
+    @Test
+    void logout_should_remove_jwt_cookie_and_return_401_on_errands() throws Exception {
+        String body = """
+                {
+                    "email": "viktor@gmail.com",
+                    "password": "password"
+                }
+                """;
+        MvcResult result =  mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(cookie().exists("jwt"))
+                .andReturn();
+
+        Cookie jwtCookie = result.getResponse().getCookie("jwt");
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .cookie(jwtCookie))
+                .andExpect(status().isOk())
+                .andExpect(cookie().value("jwt", ""))
+                .andExpect(cookie().maxAge("jwt", 0));
+
         mockMvc.perform(get("/api/errands"))
                 .andExpect(status().isUnauthorized());
     }
