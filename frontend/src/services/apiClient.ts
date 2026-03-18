@@ -28,7 +28,7 @@ const parseBody = async (res: Response) => {
     return text.length ? {raw: text} : null;
 };
 
-//Defines what is allowed, GET sends params, all other needs headers
+// Defines what is allowed, GET sends params, all other needs headers
 type GetOptions = {
     params?: Record<string, QueryValue>;
     headers?: HeadersInit;
@@ -108,4 +108,28 @@ export const apiClient = {
             headers: options?.headers,
         });
     },
+    getBlob: async (path: string, options?: GetOptions): Promise<Blob> => {
+        const query = buildQuery(options?.params);
+
+        const res = await fetch(toUrl(`${path}${query}`), {
+            method: "GET",
+            credentials: "include",
+            headers: {
+                Accept: "text/csv",
+                ...(options?.headers ?? {}),
+            },
+        });
+
+        if (!res.ok) {
+            const body = await parseBody(res);
+            const msg =
+                body && typeof body === "object" && "message" in body && typeof body.message === "string"
+                    ? body.message
+                    : `Request failed (${res.status})`;
+
+            throw new ApiError(msg, res.status, body);
+        }
+
+        return res.blob();
+    }
 };

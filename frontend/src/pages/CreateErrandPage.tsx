@@ -1,17 +1,17 @@
-import {useEffect, useMemo, useState} from "react";
-import {useNavigate} from "react-router-dom";
-import {addErrandHistoryEntry, createErrand} from "../api/errandsApi";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { addErrandHistoryEntry, createErrand } from "../api/errandsApi";
 import {
     fetchAssignees,
     fetchContacts,
     fetchCustomers,
     fetchPriorities,
     fetchStatuses,
-    type AssigneeOption,
-    type ContactOption,
-    type CustomerOption,
-    type PriorityOption,
-    type StatusOption,
+    type AssigneeLookup,
+    type ContactLookup,
+    type CustomerLookup,
+    type PriorityLookup,
+    type StatusLookup,
 } from "../api/LookupsApi";
 
 type PurchaseFormValue = {
@@ -72,7 +72,7 @@ const isPositiveInteger = (value: string) => {
     return Number.isInteger(parsed) && parsed > 0;
 };
 
-const contactLabel = (contact: ContactOption) =>
+const contactLabel = (contact: ContactLookup) =>
     `${contact.firstName} ${contact.lastName}`.trim() ||
     contact.mail ||
     `Kontakt ${contact.contactId}`;
@@ -163,11 +163,11 @@ export default function CreateErrandPage() {
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submitWarning, setSubmitWarning] = useState<string | null>(null);
 
-    const [statuses, setStatuses] = useState<StatusOption[]>([]);
-    const [priorities, setPriorities] = useState<PriorityOption[]>([]);
-    const [assignees, setAssignees] = useState<AssigneeOption[]>([]);
-    const [customers, setCustomers] = useState<CustomerOption[]>([]);
-    const [contacts, setContacts] = useState<ContactOption[]>([]);
+    const [statuses, setStatuses] = useState<StatusLookup[]>([]);
+    const [priorities, setPriorities] = useState<PriorityLookup[]>([]);
+    const [assignees, setAssignees] = useState<AssigneeLookup[]>([]);
+    const [customers, setCustomers] = useState<CustomerLookup[]>([]);
+    const [contacts, setContacts] = useState<ContactLookup[]>([]);
 
     const [isLoadingLookups, setIsLoadingLookups] = useState(true);
     const [lookupError, setLookupError] = useState("");
@@ -187,9 +187,7 @@ export default function CreateErrandPage() {
                 fetchContacts(),
             ]);
 
-            if (!alive) {
-                return;
-            }
+            if (!alive) return;
 
             const [
                 statusesResult,
@@ -200,15 +198,29 @@ export default function CreateErrandPage() {
             ] = results;
 
             const loadedStatuses =
-                statusesResult.status === "fulfilled" ? statusesResult.value : [];
+                statusesResult.status === "fulfilled"
+                    ? (statusesResult.value as StatusLookup[])
+                    : [];
+
             const loadedPriorities =
-                prioritiesResult.status === "fulfilled" ? prioritiesResult.value : [];
+                prioritiesResult.status === "fulfilled"
+                    ? (prioritiesResult.value as PriorityLookup[])
+                    : [];
+
             const loadedAssignees =
-                assigneesResult.status === "fulfilled" ? assigneesResult.value : [];
+                assigneesResult.status === "fulfilled"
+                    ? (assigneesResult.value as AssigneeLookup[])
+                    : [];
+
             const loadedCustomers =
-                customersResult.status === "fulfilled" ? customersResult.value : [];
+                customersResult.status === "fulfilled"
+                    ? (customersResult.value as CustomerLookup[])
+                    : [];
+
             const loadedContacts =
-                contactsResult.status === "fulfilled" ? contactsResult.value : [];
+                contactsResult.status === "fulfilled"
+                    ? (contactsResult.value as ContactLookup[])
+                    : [];
 
             setStatuses(loadedStatuses);
             setPriorities(loadedPriorities);
@@ -216,15 +228,18 @@ export default function CreateErrandPage() {
             setCustomers(loadedCustomers);
             setContacts(loadedContacts);
 
-            const defaultPriority =
-                loadedPriorities.find(
-                    (priority) => priority.name.trim().toLowerCase() === "normal",
-                );
+            const defaultPriority = loadedPriorities.find(
+                (priority) => priority.name.trim().toLowerCase() === "normal",
+            );
 
             setValues((current) => ({
                 ...current,
-                statusId: current.statusId || (loadedStatuses[0] ? String(loadedStatuses[0].statusId) : ""),
-                priorityId: current.priorityId || (defaultPriority ? String(defaultPriority.priorityId) : ""),
+                statusId:
+                    current.statusId ||
+                    (loadedStatuses[0] ? String(loadedStatuses[0].statusId) : ""),
+                priorityId:
+                    current.priorityId ||
+                    (defaultPriority ? String(defaultPriority.priorityId) : ""),
             }));
 
             const failures: string[] = [];
@@ -250,7 +265,9 @@ export default function CreateErrandPage() {
             }
 
             if (failures.length > 0) {
-                setLookupError(`Kunde inte hämta alla valbara listor. ${failures.join(" | ")}`);
+                setLookupError(
+                    `Kunde inte hämta alla valbara listor. ${failures.join(" | ")}`,
+                );
             }
 
             setIsLoadingLookups(false);
@@ -305,9 +322,9 @@ export default function CreateErrandPage() {
     }, [values.customerId, values.contactId, contacts]);
 
     const handleFieldChange = (
-        event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+        event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
     ) => {
-        const {name, value} = event.target;
+        const { name, value } = event.target;
 
         setValues((current) => ({
             ...current,
@@ -320,7 +337,7 @@ export default function CreateErrandPage() {
         }));
     };
 
-    const handleCustomerChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const handleCustomerChange = (event: ChangeEvent<HTMLSelectElement>) => {
         const nextCustomerId = event.target.value;
 
         setValues((current) => ({
@@ -351,7 +368,9 @@ export default function CreateErrandPage() {
     const handleRemovePurchase = (index: number) => {
         setValues((current) => ({
             ...current,
-            purchases: current.purchases.filter((_, purchaseIndex) => purchaseIndex !== index),
+            purchases: current.purchases.filter(
+                (_, purchaseIndex) => purchaseIndex !== index,
+            ),
         }));
     };
 
@@ -363,7 +382,7 @@ export default function CreateErrandPage() {
         setValues((current) => ({
             ...current,
             purchases: current.purchases.map((purchase, purchaseIndex) =>
-                purchaseIndex === index ? {...purchase, [field]: value} : purchase,
+                purchaseIndex === index ? { ...purchase, [field]: value } : purchase,
             ),
         }));
 
@@ -434,16 +453,17 @@ export default function CreateErrandPage() {
 
     return (
         <div className="min-h-screen bg-stone-100 p-4">
-            <div className="mx-auto max-w-7xl">
+            <div className="mx-auto max-w-[1600px]">
                 <div className="mb-6">
                     <p className="text-sm text-slate-500">Ärenden / Skapa ärende</p>
-                    <h1 className="mt-2 text-3xl font-bold text-slate-900">Skapa ärende</h1>
+                    <h1 className="mt-2 text-3xl font-bold text-slate-900">
+                        Skapa ärende
+                    </h1>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-3">
+                <form onSubmit={handleSubmit} className="space-y-3" noValidate>
                     {lookupError ? (
-                        <div
-                            className="rounded-2xl border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+                        <div className="rounded-2xl border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
                             {lookupError}
                         </div>
                     ) : null}
@@ -455,8 +475,7 @@ export default function CreateErrandPage() {
                     ) : null}
 
                     {submitWarning ? (
-                        <div
-                            className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
                             {submitWarning}
                         </div>
                     ) : null}
@@ -488,7 +507,10 @@ export default function CreateErrandPage() {
                                         <>
                                             <option value="">Välj kund</option>
                                             {customers.map((customer) => (
-                                                <option key={customer.customerId} value={customer.customerId}>
+                                                <option
+                                                    key={customer.customerId}
+                                                    value={customer.customerId}
+                                                >
                                                     {customer.name}
                                                 </option>
                                             ))}
@@ -496,7 +518,9 @@ export default function CreateErrandPage() {
                                     )}
                                 </select>
                                 {errors.customerId ? (
-                                    <p className="mt-1 text-sm text-red-600">{errors.customerId}</p>
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.customerId}
+                                    </p>
                                 ) : null}
                             </div>
 
@@ -516,7 +540,9 @@ export default function CreateErrandPage() {
                                     className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400"
                                 />
                                 {errors.title ? (
-                                    <p className="mt-1 text-sm text-red-600">{errors.title}</p>
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.title}
+                                    </p>
                                 ) : null}
                             </div>
 
@@ -541,7 +567,10 @@ export default function CreateErrandPage() {
                                         <>
                                             <option value="">Välj ansvarig</option>
                                             {assignees.map((assignee) => (
-                                                <option key={assignee.assigneeId} value={assignee.assigneeId}>
+                                                <option
+                                                    key={assignee.assigneeId}
+                                                    value={assignee.assigneeId}
+                                                >
                                                     {assignee.name}
                                                 </option>
                                             ))}
@@ -549,7 +578,9 @@ export default function CreateErrandPage() {
                                     )}
                                 </select>
                                 {errors.assigneeId ? (
-                                    <p className="mt-1 text-sm text-red-600">{errors.assigneeId}</p>
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.assigneeId}
+                                    </p>
                                 ) : null}
                             </div>
 
@@ -578,7 +609,10 @@ export default function CreateErrandPage() {
                                         <>
                                             <option value="">Välj kontakt</option>
                                             {filteredContacts.map((contact) => (
-                                                <option key={contact.contactId} value={contact.contactId}>
+                                                <option
+                                                    key={contact.contactId}
+                                                    value={contact.contactId}
+                                                >
                                                     {contactLabel(contact)}
                                                 </option>
                                             ))}
@@ -586,7 +620,9 @@ export default function CreateErrandPage() {
                                     )}
                                 </select>
                                 {errors.contactId ? (
-                                    <p className="mt-1 text-sm text-red-600">{errors.contactId}</p>
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.contactId}
+                                    </p>
                                 ) : null}
                             </div>
 
@@ -607,14 +643,18 @@ export default function CreateErrandPage() {
                                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none focus:border-slate-400"
                                 />
                                 {errors.description ? (
-                                    <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.description}
+                                    </p>
                                 ) : null}
                             </div>
                         </div>
                     </section>
 
                     <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <h2 className="mb-2 text-lg font-semibold text-slate-900">Ärendedata</h2>
+                        <h2 className="mb-2 text-lg font-semibold text-slate-900">
+                            Ärendedata
+                        </h2>
 
                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                             <div>
@@ -638,23 +678,33 @@ export default function CreateErrandPage() {
                                         <option value="">Inga statusar hittades</option>
                                     ) : (
                                         statuses.map((status) => (
-                                            <option key={status.statusId} value={status.statusId}>
+                                            <option
+                                                key={status.statusId}
+                                                value={status.statusId}
+                                            >
                                                 {status.name}
                                             </option>
                                         ))
                                     )}
                                 </select>
                                 {errors.statusId ? (
-                                    <p className="mt-1 text-sm text-red-600">{errors.statusId}</p>
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.statusId}
+                                    </p>
                                 ) : null}
                             </div>
 
                             <div>
                                 <label
-                                    className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                    htmlFor="priorityId"
+                                    className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500"
+                                >
                                     <span
                                         className="inline-block h-2.5 w-2.5 rounded-full"
-                                        style={{backgroundColor: selectedPriority?.color ?? "#FFFFFF"}}
+                                        style={{
+                                            backgroundColor:
+                                                selectedPriority?.color ?? "#FFFFFF",
+                                        }}
                                     />
                                     Prioritet
                                 </label>
@@ -672,14 +722,19 @@ export default function CreateErrandPage() {
                                         <option value="">Inga prioriteter hittades</option>
                                     ) : (
                                         priorities.map((priority) => (
-                                            <option key={priority.priorityId} value={priority.priorityId}>
+                                            <option
+                                                key={priority.priorityId}
+                                                value={priority.priorityId}
+                                            >
                                                 {priority.name}
                                             </option>
                                         ))
                                     )}
                                 </select>
                                 {errors.priorityId ? (
-                                    <p className="mt-1 text-sm text-red-600">{errors.priorityId}</p>
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.priorityId}
+                                    </p>
                                 ) : null}
                             </div>
 
@@ -701,7 +756,9 @@ export default function CreateErrandPage() {
                                     className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400"
                                 />
                                 {errors.timeSpent ? (
-                                    <p className="mt-1 text-sm text-red-600">{errors.timeSpent}</p>
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.timeSpent}
+                                    </p>
                                 ) : null}
                             </div>
 
@@ -723,18 +780,24 @@ export default function CreateErrandPage() {
                                     className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400"
                                 />
                                 {errors.agreedPrice ? (
-                                    <p className="mt-1 text-sm text-red-600">{errors.agreedPrice}</p>
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.agreedPrice}
+                                    </p>
                                 ) : null}
                             </div>
                         </div>
                     </section>
 
                     <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <h2 className="mb-4 text-lg font-semibold text-slate-900">
+                        <label
+                            htmlFor="initialHistoryNote"
+                            className="mb-4 block text-lg font-semibold text-slate-900"
+                        >
                             Första historiknotering
-                        </h2>
+                        </label>
                         <p className="mb-3 text-sm text-slate-500">
-                            Anteckningen sparas som första rad i historiken när ärendet skapas.
+                            Anteckningen sparas som första rad i historiken när
+                            ärendet skapas.
                         </p>
                         <textarea
                             id="initialHistoryNote"
@@ -749,19 +812,25 @@ export default function CreateErrandPage() {
 
                     <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                         <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-slate-900">Inköp</h2>
+                            <h2 className="text-lg font-semibold text-slate-900">
+                                Inköp
+                            </h2>
                             <button
                                 type="button"
                                 onClick={handleAddPurchase}
                                 className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-6 py-0.5 text-sm font-semibold text-[#E85D5D] shadow-[0_2px_6px_rgba(15,23,42,0.12)] transition hover:bg-slate-50"
                             >
-                                <span className="mr-1 text-base leading-none text-slate-700">+</span>
+                                <span className="mr-1 text-base leading-none text-slate-700">
+                                    +
+                                </span>
                                 Lägg till inköp
                             </button>
                         </div>
 
                         {errors.purchases ? (
-                            <p className="mb-3 text-sm text-red-600">{errors.purchases}</p>
+                            <p className="mb-3 text-sm text-red-600">
+                                {errors.purchases}
+                            </p>
                         ) : null}
 
                         {values.purchases.length === 0 ? (
@@ -776,7 +845,9 @@ export default function CreateErrandPage() {
                                         className="rounded-xl border border-slate-200 bg-slate-50 p-4"
                                     >
                                         <div className="mb-4 flex items-center justify-between">
-                                            <h3 className="font-medium text-slate-900">Inköp {index + 1}</h3>
+                                            <h3 className="font-medium text-slate-900">
+                                                Inköp {index + 1}
+                                            </h3>
                                             <button
                                                 type="button"
                                                 onClick={() => handleRemovePurchase(index)}
@@ -785,16 +856,24 @@ export default function CreateErrandPage() {
                                                 Ta bort
                                             </button>
                                         </div>
+
                                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                                             <div>
                                                 <label
-                                                    className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                                    htmlFor={`purchase-itemName-${index}`}
+                                                    className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+                                                >
                                                     Namn
                                                 </label>
                                                 <input
+                                                    id={`purchase-itemName-${index}`}
                                                     value={purchase.itemName}
                                                     onChange={(event) =>
-                                                        handlePurchaseChange(index, "itemName", event.target.value)
+                                                        handlePurchaseChange(
+                                                            index,
+                                                            "itemName",
+                                                            event.target.value,
+                                                        )
                                                     }
                                                     placeholder="HDMI kabel"
                                                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
@@ -803,16 +882,23 @@ export default function CreateErrandPage() {
 
                                             <div>
                                                 <label
-                                                    className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                                    htmlFor={`purchase-quantity-${index}`}
+                                                    className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+                                                >
                                                     Antal
                                                 </label>
                                                 <input
+                                                    id={`purchase-quantity-${index}`}
                                                     type="number"
                                                     min="1"
                                                     step="1"
                                                     value={purchase.quantity}
                                                     onChange={(event) =>
-                                                        handlePurchaseChange(index, "quantity", event.target.value)
+                                                        handlePurchaseChange(
+                                                            index,
+                                                            "quantity",
+                                                            event.target.value,
+                                                        )
                                                     }
                                                     placeholder="1"
                                                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
@@ -821,16 +907,23 @@ export default function CreateErrandPage() {
 
                                             <div>
                                                 <label
-                                                    className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                                    htmlFor={`purchase-purchasePrice-${index}`}
+                                                    className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+                                                >
                                                     Inköpspris
                                                 </label>
                                                 <input
+                                                    id={`purchase-purchasePrice-${index}`}
                                                     type="number"
                                                     min="0"
                                                     step="0.01"
                                                     value={purchase.purchasePrice}
                                                     onChange={(event) =>
-                                                        handlePurchaseChange(index, "purchasePrice", event.target.value)
+                                                        handlePurchaseChange(
+                                                            index,
+                                                            "purchasePrice",
+                                                            event.target.value,
+                                                        )
                                                     }
                                                     placeholder="0"
                                                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
@@ -839,16 +932,23 @@ export default function CreateErrandPage() {
 
                                             <div>
                                                 <label
-                                                    className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                                    htmlFor={`purchase-shippingCost-${index}`}
+                                                    className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+                                                >
                                                     Frakt
                                                 </label>
                                                 <input
+                                                    id={`purchase-shippingCost-${index}`}
                                                     type="number"
                                                     min="0"
                                                     step="0.01"
                                                     value={purchase.shippingCost}
                                                     onChange={(event) =>
-                                                        handlePurchaseChange(index, "shippingCost", event.target.value)
+                                                        handlePurchaseChange(
+                                                            index,
+                                                            "shippingCost",
+                                                            event.target.value,
+                                                        )
                                                     }
                                                     placeholder="0"
                                                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
@@ -857,23 +957,29 @@ export default function CreateErrandPage() {
 
                                             <div>
                                                 <label
-                                                    className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                                    htmlFor={`purchase-salePrice-${index}`}
+                                                    className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+                                                >
                                                     Utpris
                                                 </label>
                                                 <input
+                                                    id={`purchase-salePrice-${index}`}
                                                     type="number"
                                                     min="0"
                                                     step="0.01"
                                                     value={purchase.salePrice}
                                                     onChange={(event) =>
-                                                        handlePurchaseChange(index, "salePrice", event.target.value)
+                                                        handlePurchaseChange(
+                                                            index,
+                                                            "salePrice",
+                                                            event.target.value,
+                                                        )
                                                     }
                                                     placeholder="0"
                                                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
                                                 />
                                             </div>
                                         </div>
-
                                     </div>
                                 ))}
                             </div>
@@ -892,8 +998,7 @@ export default function CreateErrandPage() {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="rounded-full px-8 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#88c3a7] disabled:opacity-50"
-                            style={{backgroundColor: "#99D0B6"}}
+                            className="rounded-full bg-[#79C6A3] px-10 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#69b894] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {isSubmitting ? "Sparar..." : "Spara ärende"}
                         </button>
