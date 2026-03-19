@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { apiClient } from "../services/apiClient";
 import * as React from "react";
+import {ApiError} from "../services/apiError.ts";
 
 type Priority = {
-    priorityId: number;
+    id: number;
     name: string;
     color: string;
-    bold: boolean;
+    isDefault: boolean;
 };
 
 export default function NewPriorityForm({
@@ -18,13 +19,13 @@ export default function NewPriorityForm({
 }) {
     const [name, setName] = useState(priority?.name ?? "");
     const [color, setColor] = useState(priority?.color ?? "#000000");
-    const [bold, setBold] = useState(priority?.bold ?? false);
+    const [isDefault, setIsDefault] = useState(priority?.isDefault ?? false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         setName(priority?.name ?? "");
         setColor(priority?.color ?? "#000000");
-        setBold(priority?.bold ?? false);
+        setIsDefault(priority?.isDefault ?? false);
     }, [priority]);
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -39,24 +40,30 @@ export default function NewPriorityForm({
 
         try {
             if (priority) {
-                await apiClient.put(`/api/priorities/${priority.priorityId}`, {
+                await apiClient.put(`/api/priorities/${priority.id}`, {
                     name: name.trim(),
                     color,
-                    bold,
+                    isDefault,
                 });
             } else {
                 await apiClient.post("/api/priorities", {
                     name: name.trim(),
                     color,
-                    bold,
+                    isDefault,
                 });
             }
 
             setDrawerOpen(false);
 
-        } catch (err: unknown) {
-            if (err instanceof Error) {
-                setError("Prioritet finns redan...");
+        }  catch (err: unknown) {
+            if (err instanceof ApiError) {
+                if (err.status === 409) {
+                    setError("Prioritet finns redan...");
+                } else if (err.status === 400) {
+                    setError("Ogiltigt namn...");
+                } else {
+                    setError("Serverfel...");
+                }
             } else {
                 setError("Något gick fel...");
             }
@@ -119,21 +126,21 @@ export default function NewPriorityForm({
                 {/* BOLD TOGGLE */}
                 <div className="flex items-center justify-between">
                     <label className="text-sm text-slate-600">
-                        Fetstil
+                        Standard
                     </label>
 
                     <button
                         type="button"
-                        onClick={() => setBold(!bold)}
+                        onClick={() => setIsDefault(!isDefault)}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-200 ${
-                            bold ? "bg-[#0A1633]" : "bg-slate-300"
+                            isDefault ? "bg-[#0A1633]" : "bg-slate-300"
                         }`}
                     >
-    <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
-            bold ? "translate-x-6" : "translate-x-1"
-        }`}
-    />
+        <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                isDefault ? "translate-x-6" : "translate-x-1"
+            }`}
+        />
                     </button>
                 </div>
 
@@ -141,7 +148,7 @@ export default function NewPriorityForm({
                 <div className="text-sm">
                     <span
                         className={`px-2 py-1 rounded ${
-                            bold ? "font-bold" : ""
+                            isDefault ? "font-bold" : ""
                         }`}
                         style={{
                             backgroundColor: `${color}20`,

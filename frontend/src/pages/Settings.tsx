@@ -8,10 +8,10 @@ type Status = {
 };
 
 type Priority = {
-    priorityId: number;
+    id: number;
     name: string;
     color: string;
-    bold: boolean;
+    isDefault: boolean;
 };
 
 export default function Settings() {
@@ -113,20 +113,20 @@ export default function Settings() {
                     <div className="grid grid-cols-[2fr_1fr_1fr_120px] gap-4 bg-slate-100 px-6 py-3 text-[11px] font-semibold uppercase text-slate-500 border-b border-slate-200">
                         <div>Namn</div>
                         <div>Färg</div>
-                        <div>Fetstil</div>
+                        <div>Standard</div>
                         <div className="text-right">Åtgärd</div>
                     </div>
 
                     <ul className="divide-y divide-slate-200">
                         {priorities.map((p) => (
                             <li
-                                key={p.priorityId}
+                                key={p.id}
                                 className="grid grid-cols-[2fr_1fr_1fr_120px] gap-4 items-center px-6 py-4"
                             >
                                 {/* NAME */}
                                 <div
                                     className={`text-slate-800 ${
-                                        p.bold ? "font-bold" : "font-medium"
+                                        p.isDefault ? "font-bold" : "font-medium"
                                     }`}
                                 >
                                     {p.name}
@@ -147,7 +147,7 @@ export default function Settings() {
 
                                 {/* BOLD */}
                                 <div className="text-base font-medium text-slate-800">
-                                    {p.bold ? "Ja" : "Nej"}
+                                    {p.isDefault ? "Ja" : "Nej"}
                                 </div>
 
                                 {/* ACTION */}

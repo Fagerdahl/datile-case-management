@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { apiClient } from "../services/apiClient";
 import * as React from "react";
-import axios from "axios";
+import {ApiError} from "../services/apiError.ts";
 
 type Status = {
     statusId: number;
@@ -46,15 +46,11 @@ export default function NewStatusForm({
             setDrawerOpen(false);
 
         } catch (err: unknown) {
-            if (axios.isAxiosError(err)) {
-                const status = err.response?.status;
-
-                if (status === 409) {
+            if (err instanceof ApiError) {
+                if (err.status === 409) {
                     setError("Status finns redan...");
-                } else if (status === 400) {
+                } else if (err.status === 400) {
                     setError("Ogiltigt namn...");
-                } else if (status === 404) {
-                    setError("Status hittades inte...");
                 } else {
                     setError("Serverfel...");
                 }
