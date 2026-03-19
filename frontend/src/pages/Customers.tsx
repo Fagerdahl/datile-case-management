@@ -10,6 +10,7 @@ import {
 import { CustomerTable } from "../components/CustomerTable";
 import { NewCustomerForm } from "../components/NewCustomerForm";
 import type { CustomerDraft } from "../types/customers";
+import Contacts from "../components/ContactsSection.tsx";
 
 const emptyDraft: CustomerDraft = {
     name: "",
@@ -253,6 +254,7 @@ export default function Customers() {
                     </div>
                 )}
             </section>
+            <Contacts />
         </main>
     );
 }
