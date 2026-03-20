@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 /* Standardized error handling */
 
@@ -24,6 +25,20 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiErrorDto> handleResponseStatus(ResponseStatusException ex) {
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+
+        log.debug("Response status exception: {} {}", status.value(), ex.getReason());
+
+        var body = new ApiErrorDto(
+                status.getReasonPhrase(),
+                ex.getReason() != null ? ex.getReason() : "Request failed"
+        );
+
+        return ResponseEntity.status(status).body(body);
     }
 
     @ExceptionHandler(Exception.class)
