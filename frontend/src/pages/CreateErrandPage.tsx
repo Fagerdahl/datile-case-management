@@ -228,9 +228,10 @@ export default function CreateErrandPage() {
             setCustomers(loadedCustomers);
             setContacts(loadedContacts);
 
-            const defaultPriority = loadedPriorities.find(
-                (priority) => priority.name.trim().toLowerCase() === "normal",
-            );
+            const defaultPriority =
+                loadedPriorities.find(
+                    (priority) => priority.isDefault
+                );
 
             setValues((current) => ({
                 ...current,

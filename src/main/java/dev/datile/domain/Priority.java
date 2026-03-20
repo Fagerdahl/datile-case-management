@@ -10,6 +10,7 @@ public class Priority {
 
     @Id
     @Column(name = "priority_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long priorityId;
 
     @Column(nullable = false)
@@ -23,8 +24,26 @@ public class Priority {
 
     protected Priority() {}
 
+    public Priority(String name, String color, boolean isDefault) {
+        this.name = name;
+        this.color = color;
+        this.isDefault = isDefault;
+    }
+
     public Long getPriorityId() { return priorityId; }
     public String getName() { return name; }
     public String getColor() { return color; }
     public boolean isDefault() { return isDefault; }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public void setDefault(boolean b) {
+        isDefault = b;
+    }
 }
