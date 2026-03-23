@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import {useEffect, useMemo, useState, type ChangeEvent, type FormEvent} from "react";
 import { useNavigate } from "react-router-dom";
 import { addErrandHistoryEntry, createErrand } from "../api/errandsApi";
 import {
     fetchAssignees,
     fetchContacts,
-    fetchCustomers,
+    fetchCustomerLookups,
     fetchPriorities,
     fetchStatuses,
     type AssigneeLookup,
@@ -183,7 +183,7 @@ export default function CreateErrandPage() {
                 fetchStatuses(),
                 fetchPriorities(),
                 fetchAssignees(),
-                fetchCustomers(),
+                fetchCustomerLookups(),
                 fetchContacts(),
             ]);
 
@@ -393,7 +393,7 @@ export default function CreateErrandPage() {
         }));
     };
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         const validationErrors = validateForm(values);
