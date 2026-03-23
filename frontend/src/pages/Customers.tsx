@@ -37,6 +37,8 @@ export default function Customers() {
     const [isCreating, setIsCreating] = useState(false);
     const [isDeleting, setIsDeleting] = useState<number | null>(null);
 
+    const customerNumberPattern = /^\d+$/;
+
     const loadCustomers = async () => {
         setLoading(true);
         setError(null);
@@ -82,6 +84,11 @@ export default function Customers() {
     const handleSaveCustomer = async (customerId: number) => {
         if (!draft.name.trim() || !draft.customerNumber.trim()) {
             setError("Kundnamn och kundnummer måste fyllas i.");
+            return;
+        }
+
+        if (!customerNumberPattern.test(newCustomerDraft.customerNumber.trim())) {
+            setError("Kundnummer får bara innehålla siffror.");
             return;
         }
 
