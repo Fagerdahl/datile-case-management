@@ -37,8 +37,6 @@ export default function Customers() {
     const [isCreating, setIsCreating] = useState(false);
     const [isDeleting, setIsDeleting] = useState<number | null>(null);
 
-    const customerNumberPattern = /^\d+$/;
-
     const loadCustomers = async () => {
         setLoading(true);
         setError(null);
@@ -87,11 +85,6 @@ export default function Customers() {
             return;
         }
 
-        if (!customerNumberPattern.test(newCustomerDraft.customerNumber.trim())) {
-            setError("Kundnummer får bara innehålla siffror.");
-            return;
-        }
-
         setIsSaving(true);
         setError(null);
 
@@ -129,8 +122,12 @@ export default function Customers() {
 
             setNewCustomerDraft(emptyDraft);
             setShowNewCustomerForm(false);
-            setPage(0);
-            await loadCustomers();
+
+            if (page === 0) {
+                await loadCustomers();
+            } else {
+                setPage(0);
+            }
         } catch (err) {
             console.error(err);
             setError("Kunde inte skapa kunden.");
@@ -164,6 +161,43 @@ export default function Customers() {
         } finally {
             setIsDeleting(null);
         }
+    };
+
+    const getVisiblePages = (): (number | "...")[] => {
+        const pages: (number | "...")[] = [];
+
+        const total = totalPages;
+        const current = page;
+
+        if (total <= 7) {
+            return Array.from({length: total}, (_, i) => i);
+        }
+
+        // always show first
+        pages.push(0);
+
+        // left dots
+        if (current > 3) {
+            pages.push("...");
+        }
+
+        // pages around current
+        const start = Math.max(1, current - 1);
+        const end = Math.min(total - 2, current + 1);
+
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+
+        // right dots
+        if (current < total - 3) {
+            pages.push("...");
+        }
+
+        // always show last
+        pages.push(total - 1);
+
+        return pages;
     };
 
     return (
@@ -234,6 +268,14 @@ export default function Customers() {
                     </div>
                 )}
 
+                {!loading && !error && data && (
+                    <div className="mb-4 flex items-center justify-between">
+                        <p className="text-sm text-slate-500">
+                            {data.totalElements} {data.totalElements === 1 ? "kund" : "kunder"}
+                        </p>
+                    </div>
+                )}
+
                 {!loading && !error && customers.length === 0 && (
                     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
                         Inga kunder hittades.
@@ -267,20 +309,29 @@ export default function Customers() {
                         </button>
 
                         <div className="flex flex-wrap items-center gap-2">
-                            {Array.from({length: totalPages}, (_, index) => (
-                                <button
-                                    key={index}
-                                    type="button"
-                                    onClick={() => setPage(index)}
-                                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                                        page === index
-                                            ? "bg-[#022B4F] text-white"
-                                            : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                                    }`}
-                                >
-                                    {index + 1}
-                                </button>
-                            ))}
+                            {getVisiblePages().map((item: number | "...", index: number) =>
+                                    item === "..." ? (
+                                        <span
+                                            key={`dots-${index}`}
+                                            className="px-2 text-slate-500"
+                                        >
+            ...
+        </span>
+                                    ) : (
+                                        <button
+                                            key={item}
+                                            type="button"
+                                            onClick={() => setPage(item)}
+                                            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                                                page === item
+                                                    ? "bg-[#022B4F] text-white"
+                                                    : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                                            }`}
+                                        >
+                                            {item + 1}
+                                        </button>
+                                    )
+                            )}
                         </div>
 
                         <button
