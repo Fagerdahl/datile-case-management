@@ -1,5 +1,6 @@
 package dev.datile.config;
 
+import dev.datile.repository.UserRepository;
 import dev.datile.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -20,9 +21,11 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final UserRepository userRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository) {
         this.jwtService = jwtService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -40,9 +43,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 if (username != null && jwtService.validateToken(token, username)) {
 
+                    var userOpt = userRepository.findByEmailAndIsActiveTrue(username);
+
+                    // ❗ Block if user doesn't exist OR is inactive
+                    if (userOpt.isEmpty() || !userOpt.get().isActive()) {
+                        chain.doFilter(request, response);
+                        return;
+                    }
+
                     String role = jwtService.getRoleFromToken(token);
 
-                    // ✅ critical safety
                     if (role == null) {
                         chain.doFilter(request, response);
                         return;
@@ -67,6 +77,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
 
             } catch (Exception ignored) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
             }
         }
 

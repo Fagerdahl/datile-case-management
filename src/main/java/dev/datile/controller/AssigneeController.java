@@ -24,7 +24,7 @@ public class AssigneeController {
 
     @GetMapping
     public List<AssigneeDto> listAssignees() {
-        return assigneeRepository.findAll(Sort.by("assigneeId")).stream()
+        return assigneeRepository.findByIsActiveTrue(Sort.by("assigneeId")).stream()
                 .map(assignee -> new AssigneeDto(
                         assignee.getAssigneeId(),
                         assignee.getName()
@@ -35,48 +35,62 @@ public class AssigneeController {
     @PostMapping
     public ResponseEntity<?> createAssignee(@RequestBody AssigneeDto dto) {
 
-        if (assigneeRepository.existsByNameIgnoreCase(dto.name())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Ansvarig finns redan"
-            );
+        if (dto.name() == null || dto.name().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Invalid name");
         }
 
-        var assignee = new Assignee(dto.name());
+        if (assigneeRepository.existsByNameIgnoreCaseAndIsActiveTrue(dto.name())) {
+            return ResponseEntity.status(409).body("Assignee already exists");
+        }
 
+        var assignee = new Assignee(dto.name().trim());
         var saved = assigneeRepository.save(assignee);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("assignee", new AssigneeDto(
-                saved.getAssigneeId(),
-                saved.getName()))
+        return ResponseEntity.status(201).body(
+                new AssigneeDto(saved.getAssigneeId(), saved.getName())
         );
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateAssignee(@PathVariable Long id, @RequestBody AssigneeDto dto) {
+    public ResponseEntity<?> updateAssignee(@PathVariable Long id,
+                                            @RequestBody AssigneeDto dto) {
 
-        var assignee = assigneeRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Assignee not found"
-                ));
+        return assigneeRepository.findById(id)
+                .map(assignee -> {
 
-        if (assigneeRepository.existsByNameIgnoreCase(dto.name())
-                && !assignee.getName().equalsIgnoreCase(dto.name())) {
+                    if (dto.name() == null || dto.name().trim().isEmpty()) {
+                        return ResponseEntity.badRequest().body("Invalid name");
+                    }
 
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Ansvarig finns redan"
-            );
-        }
+                    if (assigneeRepository.existsByNameIgnoreCaseAndIsActiveTrue(dto.name())
+                            && !assignee.getName().equalsIgnoreCase(dto.name())) {
+                        return ResponseEntity.status(409).body("Assignee already exists");
+                    }
 
-        assignee.setName(dto.name());
+                    assignee.setName(dto.name().trim());
+                    assigneeRepository.save(assignee);
 
-        var saved = assigneeRepository.save(assignee);
+                    return ResponseEntity.ok(
+                            new AssigneeDto(assignee.getAssigneeId(), assignee.getName())
+                    );
+                })
+                .orElseGet(() ->
+                        ResponseEntity.status(404).body("Assignee not found")
+                );
+    }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("assignee", new AssigneeDto(
-                saved.getAssigneeId(),
-                saved.getName()))
-        );
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteAssignee(@PathVariable Long id) {
+
+        return assigneeRepository.findById(id)
+                .map(assignee -> {
+                    assignee.setActive(false);
+                    assigneeRepository.save(assignee);
+
+                    return ResponseEntity.noContent().build();
+                })
+                .orElseGet(() ->
+                        ResponseEntity.status(404).body("Assignee not found")
+                );
     }
 }

@@ -90,6 +90,10 @@ public class SecurityConfig {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException(email));
 
+        if (!user.isActive()) {
+            throw new org.springframework.security.authentication.DisabledException("User is inactive");
+        }
+
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPassword())
