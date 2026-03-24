@@ -13,6 +13,12 @@ public class User {
     private String password;
     private String role;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
+
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active) { isActive = active; }
+
     public User(String name, String email, String password, String role) {
         this.name = name;
         this.email = email;

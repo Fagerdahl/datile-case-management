@@ -55,6 +55,12 @@ public class UserController {
         ));
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        userService.softDeleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/password")
     public Map<String, String> getPassword() {
         PasswordGenerator gen = new PasswordGenerator();
