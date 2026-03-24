@@ -107,6 +107,24 @@ export default function NewStatusForm({
                 >
                     Spara
                 </button>
+                {status && (
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            if (!confirm("Är du säker på att du vill ta bort statusen?")) return;
+
+                            try {
+                                await apiClient.delete(`/api/statuses/${status.statusId}`);
+                                setDrawerOpen(false);
+                            } catch {
+                                setError("Kunde inte ta bort status...");
+                            }
+                        }}
+                        className="w-full mt-4 border border-red-200 bg-red-50 text-red-600 py-2 rounded-full text-sm font-semibold hover:bg-red-100"
+                    >
+                        Ta bort status
+                    </button>
+                )}
 
             </form>
         </div>
