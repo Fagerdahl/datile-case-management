@@ -226,6 +226,24 @@ export default function NewUserForm({ setDrawerOpen, user }: Props) {
                 >
                     Spara
                 </button>
+                {user && (
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            if (!confirm("Är du säker på att du vill ta bort användaren?")) return;
+
+                            try {
+                                await apiClient.delete(`/api/users/${user.id}`);
+                                setDrawerOpen(false);
+                            } catch {
+                                setError("Kunde inte ta bort användare...");
+                            }
+                        }}
+                        className="w-full mt-4 border border-red-200 bg-red-50 text-red-600 py-2 rounded-full text-sm font-semibold hover:bg-red-100"
+                    >
+                        Ta bort användare
+                    </button>
+                )}
 
             </form>
         </div>

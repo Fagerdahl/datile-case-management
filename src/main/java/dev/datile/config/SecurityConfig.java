@@ -40,9 +40,10 @@ public class SecurityConfig {
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter(
             JwtService jwtService,
-            UserDetailsService userDetailsService
+            UserDetailsService userDetailsService,
+            UserRepository userRepository
     ) {
-        return new JwtAuthenticationFilter(jwtService, userDetailsService);
+        return new JwtAuthenticationFilter(jwtService, userDetailsService, userRepository);
     }
 
     // ✅ SECURITY CHAIN
@@ -126,6 +127,10 @@ public class SecurityConfig {
     private UserDetails loadUserFromDatabase(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException(email));
+
+        if (!user.isActive()) {
+            throw new org.springframework.security.authentication.DisabledException("User is inactive");
+        }
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
