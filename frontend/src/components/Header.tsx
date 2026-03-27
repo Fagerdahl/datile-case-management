@@ -90,18 +90,27 @@ export default function Header() {
                     isMobileBarVisible ? "translate-y-0" : "translate-y-full"
                 }`}
             >
-                <NavLink to={"/errands"} className="absolute left-4 top-4">
-                    <img alt={"datile-logo"} src={"/datile-mobile-logo.png"} height={50} width={100}/>
+                <NavLink to={"/errands"} className="absolute left-4 top-1/2 -translate-y-1/2">
+                    <img
+                        src="/DatileLogoMobile.png"
+                        alt="Datile logo"
+                        className="h-8 w-auto object-contain"
+                    />
                 </NavLink>
 
-                <img
-                    width={40}
-                    height={60}
-                    src="/hamburgerMenu.png"
-                    alt="mobile hamburger menu button"
-                    className="absolute right-4 top-4 cursor-pointer"
+                <button
+                    type="button"
                     onClick={toggleModal}
-                />
+                    aria-label="Öppna meny"
+                    className="absolute right-3 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full"
+                >
+                    <img
+                        src="/hamburgerMenu.png"
+                        alt=""
+                        aria-hidden="true"
+                        className="h-6 w-6 shrink-0 object-contain"
+                    />
+                </button>
             </div>
         </>
     );
