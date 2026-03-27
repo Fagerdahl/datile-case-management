@@ -58,7 +58,7 @@ export default function Header() {
 
             <header
                 className={`${modalOpen ? "flex items-center bg-[#E7F0EC] rounded-xl sm:rounded-none" : "hidden"}
-                fixed top-6 right-10 bottom-22 left-10 z-50 sm:static sm:flex sm:w-full sm:bg-[#001A31]
+                fixed left-1/2 top-20 bottom-24 w-[88%] max-w-[340px] -translate-x-1/2 z-50 sm:static sm:flex sm:w-full sm:bg-[#001A31]
                 justify-center text-[5vw] sm:text-[2vw] md:text-[1.5vw] lg:text-[1vw] border sm:border-0 shadow-lg border-black/10 border-b-2`}
             >
                 <nav className="font-poppins sm:flex sm:h-16 items-center justify-center text-[#F7F7F7]">
@@ -90,18 +90,27 @@ export default function Header() {
                     isMobileBarVisible ? "translate-y-0" : "translate-y-full"
                 }`}
             >
-                <NavLink to={"/errands"} className="absolute left-4 top-4">
-                    <img alt={"datile-logo"} src={"/datile-mobile-logo.png"} height={50} width={100}/>
+                <NavLink to={"/errands"} className="absolute left-4 top-1/2 -translate-y-1/2">
+                    <img
+                        src="/DatileLogoMobile.png"
+                        alt="Datile logo"
+                        className="h-8 w-auto object-contain"
+                    />
                 </NavLink>
 
-                <img
-                    width={40}
-                    height={60}
-                    src="/hamburgerMenu.png"
-                    alt="mobile hamburger menu button"
-                    className="absolute right-4 top-4 cursor-pointer"
+                <button
+                    type="button"
                     onClick={toggleModal}
-                />
+                    aria-label="Öppna meny"
+                    className="absolute right-3 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full"
+                >
+                    <img
+                        src="/hamburgerMenu.png"
+                        alt=""
+                        aria-hidden="true"
+                        className="h-6 w-6 shrink-0 object-contain"
+                    />
+                </button>
             </div>
         </>
     );
