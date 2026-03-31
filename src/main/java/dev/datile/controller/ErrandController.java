@@ -74,4 +74,19 @@ public class ErrandController {
     ) {
         return ResponseEntity.ok(service.create(request));
     }
+
+    @PutMapping("/bulk-status")
+    public ResponseEntity<Void> bulkUpdateStatus(
+            @RequestBody BulkStatusUpdateDto request
+    ) {
+        service.bulkUpdateStatus(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/bulk-status/count")
+    public ResponseEntity<Long> countBulkUpdate(
+            @RequestParam Long fromStatusId
+    ) {
+        return ResponseEntity.ok(service.countByStatus(fromStatusId));
+    }
 }

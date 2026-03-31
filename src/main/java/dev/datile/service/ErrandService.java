@@ -8,14 +8,7 @@ import dev.datile.domain.ErrandHistoryEntry;
 import dev.datile.domain.Priority;
 import dev.datile.domain.Purchase;
 import dev.datile.domain.Status;
-import dev.datile.dto.errands.AddHistoryEntryDto;
-import dev.datile.dto.errands.CreateErrandDto;
-import dev.datile.dto.errands.CreatePurchaseDto;
-import dev.datile.dto.errands.ErrandDetailsDto;
-import dev.datile.dto.errands.ErrandFilterRequest;
-import dev.datile.dto.errands.ErrandsResponseDto;
-import dev.datile.dto.errands.HistoryEntryDto;
-import dev.datile.dto.errands.UpdateErrandDto;
+import dev.datile.dto.errands.*;
 import dev.datile.mapper.ErrandMapper;
 import dev.datile.repository.AssigneeRepository;
 import dev.datile.repository.ContactRepository;
@@ -362,5 +355,40 @@ public class ErrandService {
                     "Ogiltig prioritet: " + String.join(", ", invalid)
             );
         }
+    }
+
+    @Transactional
+    public void bulkUpdateStatus(BulkStatusUpdateDto request) {
+
+        if (request.fromStatusId().equals(request.toStatusId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "fromStatusId and toStatusId cannot be the same"
+            );
+        }
+
+        Status fromStatus = statusRepo.findById(request.fromStatusId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Invalid fromStatusId"
+                ));
+
+        Status toStatus = statusRepo.findById(request.toStatusId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Invalid toStatusId"
+                ));
+
+        repo.bulkUpdateStatus(fromStatus, toStatus);
+    }
+
+    @Transactional(readOnly = true)
+    public long countByStatus(Long fromStatusId) {
+        Status fromStatus = statusRepo.findById(fromStatusId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Invalid fromStatusId"
+                ));
+
+        return repo.count((root, query, cb) ->
+                cb.equal(root.get("status"), fromStatus)
+        );
     }
 }
