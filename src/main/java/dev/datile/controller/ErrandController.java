@@ -82,4 +82,11 @@ public class ErrandController {
         service.bulkUpdateStatus(request);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/bulk-status/count")
+    public ResponseEntity<Long> countBulkUpdate(
+            @RequestParam Long fromStatusId
+    ) {
+        return ResponseEntity.ok(service.countByStatus(fromStatusId));
+    }
 }

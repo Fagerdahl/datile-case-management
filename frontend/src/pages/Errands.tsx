@@ -557,12 +557,13 @@ export default function Errands() {
     }) {
         const [fromStatus, setFromStatus] = useState<number | "">("");
         const [toStatus, setToStatus] = useState<number | "">("");
+        const [count, setCount] = useState<number | null>(null);
+        const [step, setStep] = useState<"select" | "confirm">("select");
+
         const [error, setError] = useState<string | null>(null);
         const [loading, setLoading] = useState(false);
 
-        async function handleSubmit(e: React.FormEvent) {
-            e.preventDefault();
-
+        async function handleCheck() {
             if (!fromStatus || !toStatus) {
                 setError("Välj båda statusar...");
                 return;
@@ -574,6 +575,24 @@ export default function Errands() {
             }
 
             setError(null);
+            setLoading(true);
+
+            try {
+                const res = await apiClient.get<number>(
+                    `/api/errands/bulk-status/count`,
+                    { params: { fromStatusId: fromStatus } }
+                );
+
+                setCount(res);
+                setStep("confirm");
+            } catch {
+                setError("Kunde inte hämta antal...");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function handleConfirm() {
             setLoading(true);
 
             try {
@@ -595,6 +614,7 @@ export default function Errands() {
             <div className="fixed inset-0 flex items-center justify-center bg-black/30">
                 <div className="w-[420px] rounded-[28px] bg-white p-6 shadow-xl">
 
+                    {/* HEADER */}
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-lg font-semibold">
                             Massuppdatera status
@@ -602,51 +622,90 @@ export default function Errands() {
                         <button onClick={onClose}>✕</button>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <p className="text-red-600 text-xs font-semibold">{error}</p>
+                    {step === "select" && (
+                        <div className="space-y-4">
 
-                        <div>
-                            <label className="text-sm text-slate-600">Från</label>
-                            <select
-                                value={fromStatus}
-                                onChange={(e) => setFromStatus(Number(e.target.value))}
-                                className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
-                            >
-                                <option value="">Välj...</option>
-                                {statuses.map((s) => (
-                                    <option key={s.statusId} value={s.statusId}>
-                                        {s.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                            <p className="text-red-600 text-xs font-semibold">{error}</p>
 
-                        <div>
-                            <label className="text-sm text-slate-600">Till</label>
-                            <select
-                                value={toStatus}
-                                onChange={(e) => setToStatus(Number(e.target.value))}
-                                className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
-                            >
-                                <option value="">Välj...</option>
-                                {statuses
-                                    .filter((s) => s.statusId !== fromStatus)
-                                    .map((s) => (
+                            {/* FROM */}
+                            <div>
+                                <label className="text-sm text-slate-600">Från</label>
+                                <select
+                                    value={fromStatus}
+                                    onChange={(e) => setFromStatus(Number(e.target.value))}
+                                    className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                                >
+                                    <option value="">Välj...</option>
+                                    {statuses.map((s) => (
                                         <option key={s.statusId} value={s.statusId}>
                                             {s.name}
                                         </option>
                                     ))}
-                            </select>
-                        </div>
+                                </select>
+                            </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full rounded-full bg-[#0A1633] py-2 text-white font-semibold hover:bg-[#13224A]"
-                        >
-                            {loading ? "Uppdaterar..." : "Uppdatera"}
-                        </button>
-                    </form>
+                            {/* TO */}
+                            <div>
+                                <label className="text-sm text-slate-600">Till</label>
+                                <select
+                                    value={toStatus}
+                                    onChange={(e) => setToStatus(Number(e.target.value))}
+                                    className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                                >
+                                    <option value="">Välj...</option>
+                                    {statuses
+                                        .filter((s) => s.statusId !== fromStatus)
+                                        .map((s) => (
+                                            <option key={s.statusId} value={s.statusId}>
+                                                {s.name}
+                                            </option>
+                                        ))}
+                                </select>
+                            </div>
+
+                            <button
+                                onClick={handleCheck}
+                                disabled={loading}
+                                className="w-full rounded-full bg-[#0A1633] py-2 text-white font-semibold hover:bg-[#13224A]"
+                            >
+                                {loading ? "Kontrollerar..." : "Fortsätt"}
+                            </button>
+                        </div>
+                    )}
+
+                    {step === "confirm" && (
+                        <div className="space-y-5 text-center">
+
+                            <p className="text-sm text-slate-600">
+                                Detta kommer att uppdatera
+                            </p>
+
+                            <p className="text-3xl font-bold text-slate-900">
+                                {count}
+                            </p>
+
+                            <p className="text-sm text-slate-600">
+                                ärenden
+                            </p>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setStep("select")}
+                                    className="w-full rounded-full border border-slate-300 py-2 text-sm font-semibold"
+                                >
+                                    Tillbaka
+                                </button>
+
+                                <button
+                                    onClick={handleConfirm}
+                                    disabled={loading}
+                                    className="w-full rounded-full bg-[#0A1633] py-2 text-white font-semibold hover:bg-[#13224A]"
+                                >
+                                    {loading ? "Uppdaterar..." : "Bekräfta"}
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         );

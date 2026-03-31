@@ -379,4 +379,16 @@ public class ErrandService {
 
         repo.bulkUpdateStatus(fromStatus, toStatus);
     }
+
+    @Transactional(readOnly = true)
+    public long countByStatus(Long fromStatusId) {
+        Status fromStatus = statusRepo.findById(fromStatusId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Invalid fromStatusId"
+                ));
+
+        return repo.count((root, query, cb) ->
+                cb.equal(root.get("status"), fromStatus)
+        );
+    }
 }
