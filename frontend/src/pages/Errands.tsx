@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchErrands } from "../api/errandsApi";
+import { fetchStatuses, type StatusLookup } from "../api/LookupsApi";
 import {
     fetchAssignees,
     fetchCustomerLookups,
@@ -23,6 +24,7 @@ import {
     type ErrandFilters,
     type ErrandsResponse,
 } from "../types/errands";
+import {apiClient} from "../services/apiClient.ts";
 
 /* React component for an errand page */
 
@@ -41,6 +43,9 @@ export default function Errands() {
 
     const [customers, setCustomers] = useState<CustomerLookup[]>([]);
     const [assignees, setAssignees] = useState<ErrandAssignee[]>([]);
+
+    const [statuses, setStatuses] = useState<StatusLookup[]>([]);
+    const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
 
     const navigate = useNavigate();
 
@@ -126,15 +131,17 @@ export default function Errands() {
 
         const loadFilterOptions = async () => {
             try {
-                const [customerData, assigneeData] = await Promise.all([
+                const [customerData, assigneeData, statusData] = await Promise.all([
                     fetchCustomerLookups(),
                     fetchAssignees(),
+                    fetchStatuses(), // ✅ add this
                 ]);
 
                 if (!alive) return;
 
                 setCustomers(customerData);
                 setAssignees(assigneeData);
+                setStatuses(statusData);
             } catch (e) {
                 if (!alive) return;
                 console.error("Failed to load errand filter options", e);
@@ -296,6 +303,13 @@ export default function Errands() {
                         </div>
 
                         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setIsBulkModalOpen(true)}
+                                className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
+                            >
+                                Massuppdatera
+                            </button>
                             <button
                                 type="button"
                                 onClick={() => navigate("/errands/new")}
@@ -516,7 +530,125 @@ export default function Errands() {
                         onErrandUpdated={handleErrandUpdated}
                     />
                 )}
+                {isBulkModalOpen && (
+                    <BulkStatusModal
+                        statuses={statuses}
+                        onClose={() => setIsBulkModalOpen(false)}
+                        onSuccess={() => {
+                            setFilters((prev) => ({
+                                ...prev,
+                                page: 0, // optional: reset to first page
+                            }));
+                        }}
+                    />
+                )}
             </div>
         </div>
     );
+
+    function BulkStatusModal({
+                                 statuses,
+                                 onClose,
+                                 onSuccess,
+                             }: {
+        statuses: { statusId: number; name: string }[];
+        onClose: () => void;
+        onSuccess: () => void;
+    }) {
+        const [fromStatus, setFromStatus] = useState<number | "">("");
+        const [toStatus, setToStatus] = useState<number | "">("");
+        const [error, setError] = useState<string | null>(null);
+        const [loading, setLoading] = useState(false);
+
+        async function handleSubmit(e: React.FormEvent) {
+            e.preventDefault();
+
+            if (!fromStatus || !toStatus) {
+                setError("Välj båda statusar...");
+                return;
+            }
+
+            if (fromStatus === toStatus) {
+                setError("Statusarna måste vara olika...");
+                return;
+            }
+
+            setError(null);
+            setLoading(true);
+
+            try {
+                await apiClient.put("/api/errands/bulk-status", {
+                    fromStatusId: fromStatus,
+                    toStatusId: toStatus,
+                });
+
+                onSuccess();
+                onClose();
+            } catch {
+                setError("Kunde inte uppdatera...");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        return (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/30">
+                <div className="w-[420px] rounded-[28px] bg-white p-6 shadow-xl">
+
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-lg font-semibold">
+                            Massuppdatera status
+                        </h2>
+                        <button onClick={onClose}>✕</button>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <p className="text-red-600 text-xs font-semibold">{error}</p>
+
+                        <div>
+                            <label className="text-sm text-slate-600">Från</label>
+                            <select
+                                value={fromStatus}
+                                onChange={(e) => setFromStatus(Number(e.target.value))}
+                                className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                            >
+                                <option value="">Välj...</option>
+                                {statuses.map((s) => (
+                                    <option key={s.statusId} value={s.statusId}>
+                                        {s.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="text-sm text-slate-600">Till</label>
+                            <select
+                                value={toStatus}
+                                onChange={(e) => setToStatus(Number(e.target.value))}
+                                className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                            >
+                                <option value="">Välj...</option>
+                                {statuses
+                                    .filter((s) => s.statusId !== fromStatus)
+                                    .map((s) => (
+                                        <option key={s.statusId} value={s.statusId}>
+                                            {s.name}
+                                        </option>
+                                    ))}
+                            </select>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full rounded-full bg-[#0A1633] py-2 text-white font-semibold hover:bg-[#13224A]"
+                        >
+                            {loading ? "Uppdaterar..." : "Uppdatera"}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        );
+    }
 }
