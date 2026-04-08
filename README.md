@@ -182,7 +182,7 @@ Container-based deployment
 
 Developers
 👤 Ronja Fagerdahl, https://webwonder.se/
-👤 Viktor Eriksson
+👤 Viktor Eriksson, LinkedIn
 
 💡Final Note
 
