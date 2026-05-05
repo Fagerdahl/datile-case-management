@@ -208,12 +208,42 @@ export const ErrandDetailsModal = ({
         () => calculatePurchaseSummary(purchases),
         [purchases],
     );
+    const [previewFile, setPreviewFile] = useState<any | null>(null);
+
+    const openPreview = (file: any) => {
+        setPreviewFile(file);
+    };
+
+    const closePreview = () => {
+        setPreviewFile(null);
+    };
 
     const handleSaved = (updatedErrand: ErrandDetails) => {
         setData(updatedErrand);
         setIsEditing(false);
         setOpenPurchaseFormOnEdit(false);
         onErrandUpdated(updatedErrand);
+    };
+
+    const handleDelete = async (id: number) => {
+        if (!confirm("Ta bort filen?")) return;
+
+        try {
+            const res = await fetch(`/api/attachments/${id}`, {
+                method: "DELETE",
+            });
+
+            if (!res.ok) {
+                throw new Error("Delete failed");
+            }
+
+            // reload errand data
+            const updated = await fetchErrandById(errandId);
+            setData(updated);
+
+        } catch (e) {
+            console.error("Delete failed", e);
+        }
     };
 
     return (
@@ -348,6 +378,50 @@ export const ErrandDetailsModal = ({
 
                                         <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">
                                             {safe(data.description)}
+                                        </div>
+                                    </section>
+                                    <section className="rounded-2xl border border-slate-200 bg-white p-5">
+                                        <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.14em] text-slate-500">
+                                            Bilagor
+                                        </h3>
+
+                                        <div className="grid grid-cols-4 gap-3 max-h-64 overflow-y-auto p-1">
+                                            {data.attachments?.map(file => (
+                                                <div key={file.id} className="group relative hover:scale-102">
+
+                                                    {file.contentType.startsWith("image/") ? (
+                                                        <img
+                                                            src={`/api/attachments/${file.id}`}
+                                                            className="h-24 w-full object-cover rounded-xl cursor-pointer"
+                                                            onClick={() => openPreview(file)}
+                                                        />
+                                                    ) : (
+                                                        <a
+                                                            href={`/api/attachments/${file.id}`}
+                                                            target="_blank"
+                                                            className="flex flex-col items-center justify-center h-24 px-3 text-center rounded-xl bg-gray-200 hover:bg-slate-50 transition"
+                                                        >
+                                                            {/* Icon */}
+                                                            <span className="text-2xl mb-1">
+                                                                {file.contentType === "application/pdf" ? "📄" : "📎"}
+                                                            </span>
+
+                                                            {/* Filename */}
+                                                            <span className="text-xs font-medium text-slate-700 truncate w-full">
+                                                                {file.fileName}
+                                                            </span>
+                                                        </a>
+                                                    )}
+
+                                                    {/* DELETE BUTTON */}
+                                                    <button
+                                                        onClick={() => handleDelete(file.id)}
+                                                        className="absolute top-1 right-1 hidden group-hover:block bg-red-600 text-white text-xs px-2 py-1 rounded"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            ))}
                                         </div>
                                     </section>
 
@@ -586,6 +660,37 @@ export const ErrandDetailsModal = ({
                     )}
                 </div>
             </div>
+            {previewFile && (
+                <div
+                    className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center pointer-events-auto"
+                    onClick={closePreview}
+                >
+                    <div
+                        className="relative max-w-4xl w-full p-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Close button */}
+                        <button
+                            onClick={closePreview}
+                            className="absolute top-2 right-2 bg-white text-black px-3 py-1 rounded"
+                        >
+                            ✕
+                        </button>
+
+                        {previewFile.contentType.startsWith("image/") ? (
+                            <img
+                                src={`/api/attachments/${previewFile.id}`}
+                                className="w-full max-h-[80vh] object-contain rounded"
+                            />
+                        ) : (
+                            <iframe
+                                src={`/api/attachments/${previewFile.id}`}
+                                className="w-full h-[80vh] bg-white rounded"
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
