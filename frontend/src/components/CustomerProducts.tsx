@@ -40,10 +40,18 @@ export default function CustomerProducts({
     const [showDropdown, setShowDropdown] =
         useState(false);
 
+    const [selectedProduct, setSelectedProduct] =
+        useState(false);
+
     useEffect(() => {
 
         async function search() {
 
+            if (selectedProduct) {
+
+                setSelectedProduct(false);
+                return;
+            }
             if (articleNumber.trim().length < 2) {
 
                 setSearchResults([]);
@@ -236,7 +244,7 @@ export default function CustomerProducts({
                                         <button
                                             key={product.id}
                                             type="button"
-                                            onClick={() => {
+                                            onMouseDown={() => {
 
                                                 setArticleNumber(
                                                     product.articleNumber
@@ -244,6 +252,7 @@ export default function CustomerProducts({
 
                                                 setTitle(product.title);
 
+                                                setSelectedProduct(true);
                                                 setShowDropdown(false);
                                             }}
                                             className="flex w-full flex-col px-3 py-2 text-left hover:bg-slate-100"
