@@ -5,6 +5,10 @@ import {
     fetchCustomerProducts,
     type CustomerProduct,
 } from "../api/customerProductsApi";
+import {
+    searchProducts,
+    type Product,
+} from "../api/productsApi";
 
 type Props = {
     customerId: number;
@@ -29,6 +33,48 @@ export default function CustomerProducts({
         useState(1);
 
     const [showForm, setShowForm] = useState(false);
+
+    const [searchResults, setSearchResults] =
+        useState<Product[]>([]);
+
+    const [showDropdown, setShowDropdown] =
+        useState(false);
+
+    useEffect(() => {
+
+        async function search() {
+
+            if (articleNumber.trim().length < 2) {
+
+                setSearchResults([]);
+                setShowDropdown(false);
+
+                return;
+            }
+
+            try {
+
+                const results =
+                    await searchProducts(articleNumber);
+
+                setSearchResults(results ?? []);
+
+                setShowDropdown(
+                    (results ?? []).length > 0
+                );
+
+            } catch (err) {
+
+                console.error(err);
+
+                setSearchResults([]);
+                setShowDropdown(false);
+            }
+        }
+
+        void search();
+
+    }, [articleNumber]);
 
     async function loadProducts() {
 
@@ -171,14 +217,53 @@ export default function CustomerProducts({
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
 
-                        <input
-                            placeholder="Artnr"
-                            value={articleNumber}
-                            onChange={(e) =>
-                                setArticleNumber(e.target.value)
-                            }
-                            className="rounded-lg border p-2"
-                        />
+                        <div className="relative">
+
+                            <input
+                                placeholder="Artnr"
+                                value={articleNumber}
+                                onChange={(e) =>
+                                    setArticleNumber(e.target.value)
+                                }
+                                className="w-full rounded-lg border p-2"
+                            />
+
+                            {showDropdown && searchResults?.length > 0 && (
+                                <div className="absolute z-10 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-lg">
+
+                                    {searchResults.map((product) => (
+
+                                        <button
+                                            key={product.id}
+                                            type="button"
+                                            onClick={() => {
+
+                                                setArticleNumber(
+                                                    product.articleNumber
+                                                );
+
+                                                setTitle(product.title);
+
+                                                setShowDropdown(false);
+                                            }}
+                                            className="flex w-full flex-col px-3 py-2 text-left hover:bg-slate-100"
+                                        >
+
+                    <span className="font-medium">
+                        {product.articleNumber}
+                    </span>
+
+                                            <span className="text-sm text-slate-500">
+                        {product.title}
+                    </span>
+
+                                        </button>
+                                    ))}
+
+                                </div>
+                            )}
+
+                        </div>
 
                         <input
                             placeholder="Benämning"
@@ -192,7 +277,6 @@ export default function CustomerProducts({
                         <input
                             type="number"
                             placeholder="Antal"
-                            value={amount}
                             onChange={(e) =>
                                 setAmount(Number(e.target.value))
                             }

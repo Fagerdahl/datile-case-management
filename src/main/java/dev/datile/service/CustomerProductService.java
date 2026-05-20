@@ -63,14 +63,39 @@ public class CustomerProductService {
                     return productRepository.save(newProduct);
                 });
 
-        CustomerProduct customerProduct =
-                new CustomerProduct(
+        customerProductRepository
+                .findByCustomerAndProduct(
                         customer,
-                        product,
-                        dto.amount()
-                );
+                        product
+                )
+                .ifPresentOrElse(
 
-        customerProductRepository.save(customerProduct);
+                        existing -> {
+
+                            existing.setAmount(
+                                    existing.getAmount()
+                                            + dto.amount()
+                            );
+
+                            customerProductRepository.save(
+                                    existing
+                            );
+                        },
+
+                        () -> {
+
+                            CustomerProduct customerProduct =
+                                    new CustomerProduct(
+                                            customer,
+                                            product,
+                                            dto.amount()
+                                    );
+
+                            customerProductRepository.save(
+                                    customerProduct
+                            );
+                        }
+                );
     }
 
     public void deleteCustomerProduct(Long id) {

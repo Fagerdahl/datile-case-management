@@ -47,4 +47,17 @@ public class ProductService {
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
     }
+
+    public List<ProductDto> searchProducts(String q) {
+
+        return productRepository
+                .findByArticleNumberContainingIgnoreCase(q)
+                .stream()
+                .map(product -> new ProductDto(
+                        product.getId(),
+                        product.getArticleNumber(),
+                        product.getTitle()
+                ))
+                .toList();
+    }
 }
