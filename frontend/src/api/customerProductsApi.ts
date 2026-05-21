@@ -41,3 +41,13 @@ export async function deleteCustomerProduct(
         `/api/customer-products/${id}`
     );
 }
+
+export async function updateCustomerProductAmount(
+    id: number,
+    amount: number
+) {
+    await apiClient.put(
+        `/api/customer-products/${id}`,
+        { amount }
+    );
+}

@@ -1,7 +1,9 @@
 package dev.datile.controller;
 
+import dev.datile.domain.CustomerProduct;
 import dev.datile.dto.customers.AddCustomerProductDto;
 import dev.datile.dto.customers.CustomerProductDto;
+import dev.datile.dto.customers.UpdateAmountRequest;
 import dev.datile.service.CustomerProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +39,14 @@ public class CustomerProductController {
         service.addProductToCustomer(customerId, dto);
 
         return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}")
+    public CustomerProduct updateAmount(
+            @PathVariable Long id,
+            @RequestBody UpdateAmountRequest request
+    ) {
+        return service.updateAmount(id, request.amount());
     }
 
     @DeleteMapping("/{id}")

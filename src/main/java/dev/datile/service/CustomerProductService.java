@@ -101,4 +101,17 @@ public class CustomerProductService {
     public void deleteCustomerProduct(Long id) {
         customerProductRepository.deleteById(id);
     }
+
+    public CustomerProduct updateAmount(
+            Long id,
+            Integer amount
+    ) {
+        CustomerProduct product =
+                customerProductRepository.findById(id)
+                        .orElseThrow();
+
+        product.setAmount(amount);
+
+        return customerProductRepository.save(product);
+    }
 }

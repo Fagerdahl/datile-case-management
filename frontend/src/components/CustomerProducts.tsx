@@ -3,7 +3,7 @@ import {
     addCustomerProduct,
     deleteCustomerProduct,
     fetchCustomerProducts,
-    type CustomerProduct,
+    type CustomerProduct, updateCustomerProductAmount,
 } from "../api/customerProductsApi";
 import {
     searchProducts,
@@ -135,6 +135,31 @@ export default function CustomerProducts({
         await loadProducts();
     }
 
+    async function handleUpdateAmount(
+        id: number,
+        amount: number
+    ) {
+        try {
+
+            await updateCustomerProductAmount(
+                id,
+                amount
+            );
+
+            setProducts((prev) =>
+                prev?.map((p) =>
+                    p.id === id
+                        ? { ...p, amount }
+                        : p
+                ) ?? null
+            );
+
+        } catch (err) {
+
+            console.error(err);
+        }
+    }
+
     return (
         <div className="rounded-xl bg-slate-100 p-4">
 
@@ -154,19 +179,31 @@ export default function CustomerProducts({
                         >
                             <div>
                                 <p className="font-medium">
-                                    {product.articleNumber}
+                                    {product.title}
                                 </p>
 
                                 <p className="text-sm text-slate-500">
-                                    {product.title}
+                                    {product.articleNumber}
                                 </p>
                             </div>
 
                             <div className="flex items-center gap-4">
 
-                                <p>
-                                    {product.amount} st
+                                <p className={`font-medium`}>
+                                    Antal:
                                 </p>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    value={product.amount}
+                                    onChange={(e) =>
+                                        void handleUpdateAmount(
+                                            product.id,
+                                            Number(e.target.value)
+                                        )
+                                    }
+                                    className="w-20 rounded-lg border border-slate-300 p-1 text-center"
+                                />
 
                                 <button
                                     type="button"
