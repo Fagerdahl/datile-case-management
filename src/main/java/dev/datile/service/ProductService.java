@@ -3,6 +3,7 @@ package dev.datile.service;
 import dev.datile.domain.Product;
 import dev.datile.dto.products.NewProductDto;
 import dev.datile.dto.products.ProductDto;
+import dev.datile.dto.products.UpdateProductDto;
 import dev.datile.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +37,28 @@ public class ProductService {
         );
 
         Product saved = productRepository.save(product);
+
+        return new ProductDto(
+                saved.getId(),
+                saved.getArticleNumber(),
+                saved.getTitle()
+        );
+    }
+
+    public ProductDto updateProduct(
+            Long id,
+            UpdateProductDto dto
+    ) {
+
+        Product product = productRepository
+                .findById(id)
+                .orElseThrow();
+
+        product.setArticleNumber(dto.articleNumber());
+        product.setTitle(dto.title());
+
+        Product saved =
+                productRepository.save(product);
 
         return new ProductDto(
                 saved.getId(),

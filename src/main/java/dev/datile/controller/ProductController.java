@@ -2,6 +2,7 @@ package dev.datile.controller;
 
 import dev.datile.dto.products.NewProductDto;
 import dev.datile.dto.products.ProductDto;
+import dev.datile.dto.products.UpdateProductDto;
 import dev.datile.service.ProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,6 +41,17 @@ public class ProductController {
         productService.deleteProduct(id);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductDto> updateProduct(
+            @PathVariable Long id,
+            @RequestBody UpdateProductDto dto
+    ) {
+
+        return ResponseEntity.ok(
+                productService.updateProduct(id, dto)
+        );
     }
 
     @GetMapping("/search")
