@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import {useContext, useEffect, useState} from "react";
 import {
     addCustomerProduct,
     deleteCustomerProduct,
@@ -9,6 +9,7 @@ import {
     searchProducts,
     type Product,
 } from "../api/productsApi";
+import {AuthContext} from "./AuthProvider.tsx";
 
 type Props = {
     customerId: number;
@@ -160,6 +161,18 @@ export default function CustomerProducts({
         }
     }
 
+    const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+    const authContext = useContext(AuthContext);
+
+    useEffect(() => {
+        if (authContext?.role === "ADMIN") {
+            setIsAdmin(true);
+        } else {
+            setIsAdmin(false);
+        }
+    }, []);
+
     return (
         <div className="rounded-xl bg-slate-100 p-4">
 
@@ -192,28 +205,39 @@ export default function CustomerProducts({
                                 <p className={`font-medium`}>
                                     Antal:
                                 </p>
-                                <input
-                                    type="number"
-                                    min={1}
-                                    value={product.amount}
-                                    onChange={(e) =>
-                                        void handleUpdateAmount(
-                                            product.id,
-                                            Number(e.target.value)
-                                        )
-                                    }
-                                    className="w-20 rounded-lg border border-slate-300 p-1 text-center"
-                                />
+                                {isAdmin ? (
+                                    <>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={product.amount}
+                                            onChange={(e) =>
+                                                void handleUpdateAmount(
+                                                    product.id,
+                                                    Number(e.target.value)
+                                                )
+                                            }
+                                            className="w-20 rounded-lg border border-slate-300 p-1 text-center outline-0"
+                                        />
 
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        void handleDelete(product.id)
-                                    }
-                                    className="text-red-500"
-                                >
-                                    Ta bort
-                                </button>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                            void handleDelete(product.id)
+                                            }
+                                            className="text-red-500"
+                                        >
+                                            Ta bort
+                                        </button>
+                                    </>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        readOnly={true}
+                                        value={product.amount}
+                                        className="w-20 rounded-lg border border-slate-300 p-1 text-center outline-0"
+                                    />
+                                )}
 
                             </div>
                         </div>
@@ -229,26 +253,28 @@ export default function CustomerProducts({
                         Inga artiklar tillagda ännu
                     </p>
 
-                    <button
-                        type="button"
-                        onClick={() => {
+                    {isAdmin &&  (
+                        <button
+                            type="button"
+                            onClick={() => {
 
-                            setShowForm(true);
+                                setShowForm(true);
 
-                            setArticleNumber("");
-                            setTitle("");
-                            setAmount(1);
-                        }}
-                        className="mt-4 rounded-full bg-[#022B4F] px-4 py-2 text-sm font-semibold text-white"
-                    >
-                        Lägg till artikel
-                    </button>
+                                setArticleNumber("");
+                                setTitle("");
+                                setAmount(1);
+                            }}
+                            className="mt-4 rounded-full bg-[#022B4F] px-4 py-2 text-sm font-semibold text-white"
+                        >
+                            Lägg till artikel
+                        </button>
+                    )}
 
                 </div>
 
             )}
 
-            {products && products.length > 0 && !showForm && (
+            {isAdmin && products && products.length > 0 && !showForm && (
                 <button
                     type="button"
                     onClick={() => setShowForm(true)}
@@ -257,7 +283,7 @@ export default function CustomerProducts({
                     Lägg till artikel
                 </button>
             )}
-            {showForm && (
+            {isAdmin && showForm && (
                 <div className="mt-6 rounded-xl bg-white p-4">
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">

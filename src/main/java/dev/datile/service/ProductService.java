@@ -74,7 +74,10 @@ public class ProductService {
     public List<ProductDto> searchProducts(String q) {
 
         return productRepository
-                .findByArticleNumberContainingIgnoreCase(q)
+                .findByArticleNumberContainingIgnoreCaseOrTitleContainingIgnoreCase(
+                        q,
+                        q
+                )
                 .stream()
                 .map(product -> new ProductDto(
                         product.getId(),

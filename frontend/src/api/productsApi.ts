@@ -11,7 +11,12 @@ export async function searchProducts(
 ): Promise<Product[]> {
 
     return await apiClient.get<Product[]>(
-        `/api/products/search?q=${query}`
+        "/api/products/search",
+        {
+            params: {
+                q: query,
+            },
+        }
     );
 }
 

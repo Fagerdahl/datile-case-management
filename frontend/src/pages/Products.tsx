@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import {useContext, useEffect, useState} from "react";
 import NewProductForm from "../components/NewProductForm";
 
 import {
     fetchProducts,
+    searchProducts,
     type Product,
 } from "../api/productsApi";
+import {AuthContext} from "../components/AuthProvider.tsx";
 
 export default function Products() {
 
@@ -20,16 +22,32 @@ export default function Products() {
     const [editingProduct, setEditingProduct] =
         useState<Product | null>(null);
 
-    async function loadProducts() {
+    const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+    const authContext = useContext(AuthContext);
+
+    async function fetchData() {
 
         setLoading(true);
 
         try {
 
-            const data =
-                await fetchProducts();
+            if (debouncedQuery.trim()) {
 
-            setProducts(data);
+                const data =
+                    await searchProducts(
+                        debouncedQuery
+                    );
+
+                setProducts(data);
+
+            } else {
+
+                const data =
+                    await fetchProducts();
+
+                setProducts(data);
+            }
 
         } catch (err) {
 
@@ -42,8 +60,37 @@ export default function Products() {
     }
 
     useEffect(() => {
-        void loadProducts();
+        if (authContext?.role === "ADMIN") {
+            setIsAdmin(true);
+        } else {
+            setIsAdmin(false);
+        }
     }, []);
+
+    const [query, setQuery] =
+        useState("");
+
+    const [debouncedQuery, setDebouncedQuery] =
+        useState("");
+
+    useEffect(() => {
+
+        const timeout = setTimeout(() => {
+
+            setDebouncedQuery(query);
+
+        }, 300);
+
+        return () => clearTimeout(timeout);
+
+    }, [query]);
+
+
+    useEffect(() => {
+
+        void fetchData();
+
+    }, [debouncedQuery]);
 
     return (
         <div className="min-h-screen bg-stone-100 px-4 py-8">
@@ -62,17 +109,33 @@ export default function Products() {
                         </p>
                     </div>
 
-                    <button
-                        onClick={() => {
+                    {isAdmin && (
+                        <button
+                            onClick={() => {
 
-                            setEditingProduct(null);
+                                setEditingProduct(null);
 
-                            setDrawerOpen(true);
-                        }}
-                        className="rounded-full bg-[#0A1633] px-5 py-2 text-sm font-semibold text-white hover:bg-[#13224A]"
-                    >
-                        Ny artikel
-                    </button>
+                                setDrawerOpen(true);
+                            }}
+                            className="rounded-full bg-[#0A1633] px-5 py-2 text-sm font-semibold text-white hover:bg-[#13224A]"
+                        >
+                            Ny artikel
+                        </button>
+                    )}
+
+                </div>
+
+                <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+
+                    <input
+                        type="text"
+                        value={query}
+                        onChange={(e) =>
+                            setQuery(e.target.value)
+                        }
+                        placeholder="Sök artikelnummer eller benämning..."
+                        className="w-full rounded-xl border border-slate-300 px-4 py-2 text-sm outline-none focus:border-[#99D0B6] focus:ring-2 focus:ring-[#99D0B6]/30"
+                    />
 
                 </div>
 
@@ -116,21 +179,23 @@ export default function Products() {
                                             {product.title}
                                         </div>
 
-                                        <div className="text-right">
+                                        {isAdmin && (
+                                            <div className="text-right">
 
-                                            <button
-                                                onClick={() => {
+                                                <button
+                                                    onClick={() => {
 
-                                                    setEditingProduct(product);
+                                                        setEditingProduct(product);
 
-                                                    setDrawerOpen(true);
-                                                }}
-                                                className="rounded-full border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
-                                            >
-                                                Redigera
-                                            </button>
+                                                        setDrawerOpen(true);
+                                                    }}
+                                                    className="rounded-full border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                                                >
+                                                    Redigera
+                                                </button>
 
-                                        </div>
+                                            </div>
+                                        )}
 
                                     </li>
                                 ))}
@@ -145,16 +210,10 @@ export default function Products() {
                         </>
 
                     )}
-                    {products.length === 0 && !loading && (
-                        <div className="px-6 py-10 text-center text-slate-500">
-                            Inga artiklar hittades.
-                        </div>
-                    )}
-
                 </div>
 
             </div>
-            {drawerOpen && (
+            {isAdmin && drawerOpen && (
                 <div className="fixed inset-0 z-40 flex">
 
                     <div
@@ -165,7 +224,7 @@ export default function Products() {
                     <NewProductForm
                         setDrawerOpen={setDrawerOpen}
                         product={editingProduct}
-                        onSaved={() => void loadProducts()}
+                        onSaved={() => void fetchData()}
                     />
 
                 </div>
