@@ -4,6 +4,7 @@ import dev.datile.domain.User;
 import dev.datile.repository.UserRepository;
 import dev.datile.service.JwtService;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -75,6 +76,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/customers/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/customers/**").hasRole("ADMIN")
 
+                        .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/customer-products/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/customer-products/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/customer-products/**").hasRole("ADMIN")
+
                         .requestMatchers(HttpMethod.POST, "/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")
@@ -98,6 +107,9 @@ public class SecurityConfig {
         return http.build();
     }
 
+    @Value("#{'${app.allowed-origins}'.split(',')}")
+    private List<String> allowedOrigins;
+
     // ✅ CORS
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -105,7 +117,7 @@ public class SecurityConfig {
 
         config.setAllowCredentials(true);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(allowedOrigins);
         config.setAllowedHeaders(List.of("*"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

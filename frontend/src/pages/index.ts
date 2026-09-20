@@ -9,3 +9,4 @@ export { default as CreateErrandPage } from './CreateErrandPage';
 export { default as Purchases } from './Purchases'
 export { default as NotFound } from './NotFound';
 export { default as NotAuthorized } from './NotAuthorized';
+export { default as Products } from './Products'

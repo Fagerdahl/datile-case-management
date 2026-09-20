@@ -1,0 +1,390 @@
+import {useContext, useEffect, useState} from "react";
+import {
+    addCustomerProduct,
+    deleteCustomerProduct,
+    fetchCustomerProducts,
+    type CustomerProduct, updateCustomerProductAmount,
+} from "../api/customerProductsApi";
+import {
+    searchProducts,
+    type Product,
+} from "../api/productsApi";
+import {AuthContext} from "./AuthProvider.tsx";
+
+type Props = {
+    customerId: number;
+};
+
+export default function CustomerProducts({
+                                             customerId,
+                                         }: Props) {
+
+    const [products, setProducts] =
+        useState<CustomerProduct[] | null>(null);
+
+    const [loading, setLoading] = useState(true);
+
+    const [articleNumber, setArticleNumber] =
+        useState("");
+
+    const [title, setTitle] =
+        useState("");
+
+    const [amount, setAmount] =
+        useState(1);
+
+    const [showForm, setShowForm] = useState(false);
+
+    const [searchResults, setSearchResults] =
+        useState<Product[]>([]);
+
+    const [showDropdown, setShowDropdown] =
+        useState(false);
+
+    const [selectedProduct, setSelectedProduct] =
+        useState(false);
+
+    useEffect(() => {
+
+        async function search() {
+
+            if (selectedProduct) {
+
+                setSelectedProduct(false);
+                return;
+            }
+            if (articleNumber.trim().length < 2) {
+
+                setSearchResults([]);
+                setShowDropdown(false);
+
+                return;
+            }
+
+            try {
+
+                const results =
+                    await searchProducts(articleNumber);
+
+                setSearchResults(results ?? []);
+
+                setShowDropdown(
+                    (results ?? []).length > 0
+                );
+
+            } catch (err) {
+
+                console.error(err);
+
+                setSearchResults([]);
+                setShowDropdown(false);
+            }
+        }
+
+        void search();
+
+    }, [articleNumber]);
+
+    async function loadProducts() {
+
+        setLoading(true);
+
+        try {
+
+            const data =
+                await fetchCustomerProducts(customerId);
+
+            setProducts(data);
+
+        } catch (err) {
+
+            console.error(err);
+
+        } finally {
+
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        void loadProducts();
+    }, []);
+
+    async function handleAddProduct() {
+
+        if (!articleNumber.trim()) {
+            return;
+        }
+
+        await addCustomerProduct(customerId, {
+            articleNumber,
+            title,
+            amount,
+        });
+
+        setArticleNumber("");
+        setTitle("");
+        setAmount(1);
+
+        await loadProducts();
+    }
+
+    async function handleDelete(id: number) {
+
+        await deleteCustomerProduct(id);
+
+        await loadProducts();
+    }
+
+    async function handleUpdateAmount(
+        id: number,
+        amount: number
+    ) {
+        try {
+
+            await updateCustomerProductAmount(
+                id,
+                amount
+            );
+
+            setProducts((prev) =>
+                prev?.map((p) =>
+                    p.id === id
+                        ? { ...p, amount }
+                        : p
+                ) ?? null
+            );
+
+        } catch (err) {
+
+            console.error(err);
+        }
+    }
+
+    const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+    const authContext = useContext(AuthContext);
+
+    useEffect(() => {
+        if (authContext?.role === "ADMIN") {
+            setIsAdmin(true);
+        } else {
+            setIsAdmin(false);
+        }
+    }, []);
+
+    return (
+        <div className="rounded-xl bg-slate-100 p-4">
+
+            <h3 className="mb-4 font-semibold">
+                Artiklar
+            </h3>
+
+            {loading ? (
+                <p>Laddar...</p>
+            ) : (
+                <div className="space-y-2">
+
+                    {products?.map((product) => (
+                        <div
+                            key={product.id}
+                            className="flex items-center justify-between rounded-lg bg-white p-3"
+                        >
+                            <div>
+                                <p className="font-medium">
+                                    {product.title}
+                                </p>
+
+                                <p className="text-sm text-slate-500">
+                                    {product.articleNumber}
+                                </p>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+
+                                <p className={`font-medium`}>
+                                    Antal:
+                                </p>
+                                {isAdmin ? (
+                                    <>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={product.amount}
+                                            onChange={(e) =>
+                                                void handleUpdateAmount(
+                                                    product.id,
+                                                    Number(e.target.value)
+                                                )
+                                            }
+                                            className="w-20 rounded-lg border border-slate-300 p-1 text-center outline-0"
+                                        />
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                            void handleDelete(product.id)
+                                            }
+                                            className="text-red-500"
+                                        >
+                                            Ta bort
+                                        </button>
+                                    </>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        readOnly={true}
+                                        value={product.amount}
+                                        className="w-20 rounded-lg border border-slate-300 p-1 text-center outline-0"
+                                    />
+                                )}
+
+                            </div>
+                        </div>
+                    ))}
+
+                </div>
+            )}
+
+            {products && products.length === 0 && !showForm && (
+                <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center">
+
+                    <p className="text-sm text-slate-500">
+                        Inga artiklar tillagda ännu
+                    </p>
+
+                    {isAdmin &&  (
+                        <button
+                            type="button"
+                            onClick={() => {
+
+                                setShowForm(true);
+
+                                setArticleNumber("");
+                                setTitle("");
+                                setAmount(1);
+                            }}
+                            className="mt-4 rounded-full bg-[#022B4F] px-4 py-2 text-sm font-semibold text-white"
+                        >
+                            Lägg till artikel
+                        </button>
+                    )}
+
+                </div>
+
+            )}
+
+            {isAdmin && products && products.length > 0 && !showForm && (
+                <button
+                    type="button"
+                    onClick={() => setShowForm(true)}
+                    className="mt-4 rounded-full bg-[#022B4F] px-4 py-2 text-sm font-semibold text-white"
+                >
+                    Lägg till artikel
+                </button>
+            )}
+            {isAdmin && showForm && (
+                <div className="mt-6 rounded-xl bg-white p-4">
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+
+                        <div className="relative">
+
+                            <input
+                                placeholder="Artnr"
+                                value={articleNumber}
+                                onChange={(e) =>
+                                    setArticleNumber(e.target.value)
+                                }
+                                className="w-full rounded-lg border p-2"
+                            />
+
+                            {showDropdown && searchResults?.length > 0 && (
+                                <div className="absolute z-10 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-lg">
+
+                                    {searchResults.map((product) => (
+
+                                        <button
+                                            key={product.id}
+                                            type="button"
+                                            onMouseDown={() => {
+
+                                                setArticleNumber(
+                                                    product.articleNumber
+                                                );
+
+                                                setTitle(product.title);
+
+                                                setSelectedProduct(true);
+                                                setShowDropdown(false);
+                                            }}
+                                            className="flex w-full flex-col px-3 py-2 text-left hover:bg-slate-100"
+                                        >
+
+                    <span className="font-medium">
+                        {product.articleNumber}
+                    </span>
+
+                                            <span className="text-sm text-slate-500">
+                        {product.title}
+                    </span>
+
+                                        </button>
+                                    ))}
+
+                                </div>
+                            )}
+
+                        </div>
+
+                        <input
+                            placeholder="Benämning"
+                            value={title}
+                            onChange={(e) =>
+                                setTitle(e.target.value)
+                            }
+                            className="rounded-lg border p-2"
+                        />
+
+                        <input
+                            type="number"
+                            placeholder="Antal"
+                            onChange={(e) =>
+                                setAmount(Number(e.target.value))
+                            }
+                            className="rounded-lg border p-2"
+                        />
+
+                    </div>
+
+                    <div className="mt-4 flex gap-2">
+
+                        <button
+                            type="button"
+                            onClick={async () => {
+
+                                await handleAddProduct();
+
+                                setShowForm(false);
+                            }}
+                            className="rounded-full bg-[#022B4F] px-4 py-2 text-white"
+                        >
+                            Spara artikel
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setShowForm(false)}
+                            className="rounded-full border border-slate-300 px-4 py-2"
+                        >
+                            Avbryt
+                        </button>
+
+                    </div>
+
+                </div>
+            )}
+
+        </div>
+    );
+}

@@ -86,7 +86,7 @@ export default function Header() {
                     ) : null}
 
                     <NavLink to={"/customers"} className={navLinkClass} onClick={toggleModal}>KUNDER</NavLink>
-                    <NavLink to={"/purchases"} className={navLinkClass} onClick={toggleModal}>INKÖP</NavLink>
+                    <NavLink to={"/products"} className={navLinkClass} onClick={toggleModal}>ARTIKLAR</NavLink>
                     <NavLink to={"/users"} className={navLinkClass} onClick={toggleModal}>ANVÄNDARE</NavLink>
                     <NavLink to={"/settings"} className={navLinkClass} onClick={toggleModal}>INSTÄLLNINGAR</NavLink>
                     <button

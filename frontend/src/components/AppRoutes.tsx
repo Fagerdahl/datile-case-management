@@ -8,8 +8,8 @@ import {
     PingPage,
     Login,
     CreateErrandPage,
-    Purchases,
-    NotFound
+    NotFound,
+    Products
 } from "../pages";
 import { ProtectedRoutes } from "./ProtectedRoutes.tsx";
 
@@ -24,7 +24,7 @@ export default function AppRoutes() {
                 <Route path="/errands/new" element={<CreateErrandPage />} />
                 <Route path="/reports" element={<Reports/>} />
                 <Route path="/customers" element={<Customers/>} />
-                <Route path="/purchases" element={<Purchases/>}/>
+                <Route path="/products" element={<Products/>}/>
                 <Route path="/users" element={<Users/>} />
                 <Route path="/settings" element={<Settings/>} />
                 <Route path="*" element={<NotFound/>} />

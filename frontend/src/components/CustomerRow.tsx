@@ -1,6 +1,7 @@
 import type { CustomerListItem } from "../api/customersApi";
-import type { Dispatch, SetStateAction } from "react";
+import {type Dispatch, type SetStateAction, useState} from "react";
 import type { CustomerDraft } from "../types/customers";
+import CustomerProducts from "./CustomerProducts";
 
 type CustomerRowProps = {
     customer: CustomerListItem;
@@ -27,8 +28,12 @@ export function CustomerRow({
                                 isSaving,
                                 isDeleting,
                             }: CustomerRowProps) {
+
+    const [expanded, setExpanded] = useState(false);
+
     return (
-        <tr className="bg-slate-50 text-sm text-slate-800">
+        <>
+            <tr className="bg-slate-50 text-sm text-slate-800">
             <td className="rounded-l-xl px-4 py-3 font-medium">
                 {isEditing ? (
                     <input
@@ -97,16 +102,39 @@ export function CustomerRow({
                             </button>
                         </>
                     ) : (
-                        <button
-                            type="button"
-                            onClick={() => onStartEdit(customer)}
-                            className="rounded-full border border-[#99D0B6] px-4 py-1.5 text-sm font-medium text-[#99D0B6] transition hover:bg-[#99D0B6]/10"
-                        >
-                            Redigera
-                        </button>
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => setExpanded((prev) => !prev)}
+                                className="rounded-full border border-slate-300 px-4 py-1.5 text-sm"
+                            >
+                                {expanded ? "Dölj artiklar" : "Visa artiklar"}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onStartEdit(customer)}
+                                className="rounded-full border border-[#99D0B6] px-4 py-1.5 text-sm font-medium text-[#99D0B6] transition hover:bg-[#99D0B6]/10"
+                            >
+                                Redigera
+                            </button>
+                        </>
                     )}
                 </div>
             </td>
-        </tr>
+            </tr>
+
+            {expanded && (
+                <tr>
+                    <td
+                        colSpan={3}
+                        className="px-4 pb-4"
+                    >
+                        <CustomerProducts
+                            customerId={customer.customerId}
+                        />
+                    </td>
+                </tr>
+            )}
+        </>
     );
 }
