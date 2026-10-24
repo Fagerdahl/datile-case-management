@@ -158,7 +158,11 @@ const handleCreateContact = async () => {
 
         setContacts((previous) => [
             ...previous,
-            createdContact,
+            {
+                ...createdContact,
+                phoneNumber: createdContact.phoneNumber ?? "",
+                mail: createdContact.mail ?? "",
+            },
         ]);
 
         setContactId(createdContact.contactId);
