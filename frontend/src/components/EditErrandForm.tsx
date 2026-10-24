@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createContact } from "../api/contactsApi";
 import {
     addErrandHistoryEntry,
     deletePurchase,
@@ -103,6 +104,79 @@ export const EditErrandForm = ({
     const [contactId, setContactId] = useState<number | "">(
         errand.contact?.contactId ?? "",
     );
+
+const [showNewContactForm, setShowNewContactForm] = useState(false);
+
+const [newContact, setNewContact] = useState({
+    firstName: "",
+    lastName: "",
+    phoneNumber: "",
+    mail: "",
+});
+
+const [isCreatingContact, setIsCreatingContact] = useState(false);
+const [createContactError, setCreateContactError] = useState("");
+
+const handleCreateContact = async () => {
+    if (customerId === "") {
+        setCreateContactError("Välj en kund först.");
+        return;
+    }
+
+    if (!newContact.firstName.trim() || !newContact.lastName.trim()) {
+        setCreateContactError("Förnamn och efternamn måste fyllas i.");
+        return;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phonePattern = /^[0-9+\-\s()]{7,20}$/;
+
+    if (newContact.mail.trim() && !emailPattern.test(newContact.mail.trim())) {
+        setCreateContactError("Ogiltig e-postadress.");
+        return;
+    }
+
+    if (
+        newContact.phoneNumber.trim() &&
+        !phonePattern.test(newContact.phoneNumber.trim())
+    ) {
+        setCreateContactError("Ogiltigt telefonnummer.");
+        return;
+    }
+
+    try {
+        setIsCreatingContact(true);
+        setCreateContactError("");
+
+        const createdContact = await createContact({
+            customerId,
+            firstName: newContact.firstName.trim(),
+            lastName: newContact.lastName.trim(),
+            phoneNumber: newContact.phoneNumber.trim(),
+            mail: newContact.mail.trim(),
+        });
+
+        setContacts((previous) => [
+            ...previous,
+            createdContact,
+        ]);
+
+        setContactId(createdContact.contactId);
+        setShowNewContactForm(false);
+
+        setNewContact({
+            firstName: "",
+            lastName: "",
+            phoneNumber: "",
+            mail: "",
+        });
+    } catch (error) {
+        console.error(error);
+        setCreateContactError("Kunde inte skapa kontakten.");
+    } finally {
+        setIsCreatingContact(false);
+    }
+};
     const [timeSpent, setTimeSpent] = useState(
         errand.timeSpent != null ? String(errand.timeSpent) : "",
     );
@@ -408,10 +482,17 @@ export const EditErrandForm = ({
                     <select
                         id="customer"
                         value={customerId}
-                        onChange={(event) =>
-                            setCustomerId(event.target.value === "" ? "" : Number(event.target.value))
-                        }
-                        disabled={isLoadingLookups}
+                        onChange={(event) => {
+                            const newCustomerId =
+                                event.target.value === "" ? "" : Number(event.target.value);
+
+                            if (newCustomerId !== customerId) {
+                                setContactId("");
+                            }
+
+                            setCustomerId(newCustomerId);
+                        }}
+                        disabled={isLoadingLookups || isCreatingContact}
                         className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400 disabled:bg-slate-50 disabled:text-slate-400"
                     >
                         {isLoadingLookups ? (
@@ -607,7 +688,9 @@ export const EditErrandForm = ({
                         ) : (
                             <>
                                 <option value="">Ingen vald</option>
-                                {contacts.map((contact) => (
+                                {contacts
+                                    .filter((contact) => contact.customerId === customerId)
+                                    .map((contact) => (
                                     <option key={contact.contactId} value={contact.contactId}>
                                         {contactLabel(contact)}
                                     </option>
@@ -615,6 +698,123 @@ export const EditErrandForm = ({
                             </>
                         )}
                     </select>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setShowNewContactForm((previous) => !previous);
+                                                setCreateContactError("");
+                                            }}
+                                            disabled={customerId === "" || isCreatingContact}
+                                            className="mt-2 text-sm font-semibold text-[#022B4F] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {showNewContactForm ? "Avbryt" : "+ Ny kontakt"}
+                                        </button>
+                                        {showNewContactForm && (
+                                            <div className="mt-3 space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                                                <p className="text-sm font-semibold text-slate-700">
+                                                    Skapa ny kontakt
+                                                </p>
+
+                                                <div>
+                                                    <label
+                                                        htmlFor="newContactFirstName"
+                                                        className="mb-1 block text-xs font-semibold text-slate-600"
+                                                    >
+                                                        Förnamn *
+                                                    </label>
+                                                    <input
+                                                        id="newContactFirstName"
+                                                        type="text"
+                                                        value={newContact.firstName}
+                                                        onChange={(event) =>
+                                                            setNewContact((previous) => ({
+                                                                ...previous,
+                                                                firstName: event.target.value,
+                                                            }))
+                                                        }
+                                                        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label
+                                                        htmlFor="newContactLastName"
+                                                        className="mb-1 block text-xs font-semibold text-slate-600"
+                                                    >
+                                                        Efternamn *
+                                                    </label>
+                                                    <input
+                                                        id="newContactLastName"
+                                                        type="text"
+                                                        value={newContact.lastName}
+                                                        onChange={(event) =>
+                                                            setNewContact((previous) => ({
+                                                                ...previous,
+                                                                lastName: event.target.value,
+                                                            }))
+                                                        }
+                                                        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                                                    />
+
+                                                </div>
+                                                <div>
+                                                    <label
+                                                        htmlFor="newContactPhone"
+                                                        className="mb-1 block text-xs font-semibold text-slate-600"
+                                                    >
+                                                        Telefonnummer
+                                                    </label>
+                                                    <input
+                                                        id="newContactPhone"
+                                                        type="tel"
+                                                        value={newContact.phoneNumber}
+                                                        onChange={(event) =>
+                                                            setNewContact((previous) => ({
+                                                                ...previous,
+                                                                phoneNumber: event.target.value,
+                                                            }))
+                                                        }
+                                                        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label
+                                                        htmlFor="newContactEmail"
+                                                        className="mb-1 block text-xs font-semibold text-slate-600"
+                                                    >
+                                                        E-post
+                                                    </label>
+                                                    <input
+                                                        id="newContactEmail"
+                                                        type="email"
+                                                        value={newContact.mail}
+                                                        onChange={(event) =>
+                                                            setNewContact((previous) => ({
+                                                                ...previous,
+                                                                mail: event.target.value,
+                                                            }))
+                                                        }
+                                                        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                                                    />
+                                                </div>
+                                                {createContactError && (
+                                                    <p className="text-sm text-red-600" role="alert">
+                                                        {createContactError}
+                                                    </p>
+                                                )}
+
+                                                <button
+                                                    type="button"
+                                                    onClick={handleCreateContact}
+                                                    disabled={isCreatingContact}
+                                                    className="rounded-full bg-[#6FBE98] px-5 py-2 text-sm font-semibold text-white hover:bg-[#5fb189] disabled:opacity-50"
+                                                >
+                                                    {isCreatingContact ? "Sparar kontakt..." : "Spara kontakt"}
+                                                </button>
+
+                                            </div>
+                                        )}
                 </div>
             </div>
 
@@ -883,7 +1083,7 @@ export const EditErrandForm = ({
 
                 <button
                     type="submit"
-                    disabled={isSaving || isAddingHistory || isDeletingPurchase}
+                    disabled={isSaving || isAddingHistory || isDeletingPurchase || isCreatingContact}
                     className="rounded-full bg-[#6FBE98] px-10 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#5fb189] focus:outline-none focus:ring-2 focus:ring-[#6FBE98]/40 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {isSaving ? "Sparar..." : "Spara ärende"}
