@@ -46,23 +46,27 @@ export const ReportListRow = ({
         : "—";
 
     const purchases = report.purchases ?? [];
+    const hasPurchases = purchases.length > 0;
 
     return (
         <article className="border-b border-slate-200 bg-white shadow-[0_1px_0_rgba(15,23,42,0.04)] last:border-b-0">
             <div className="px-4 py-4 sm:px-5 lg:px-6">
+
                 {/* Mobile */}
                 <div className="md:hidden">
                     <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 flex-1 items-start gap-3">
-                            <button
-                                type="button"
-                                onClick={() => onToggleExpand(report.errandId)}
-                                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-base text-slate-700 transition hover:bg-slate-50"
-                                aria-label={isExpanded ? "Dölj inköp" : "Visa inköp"}
-                                title={isExpanded ? "Dölj inköp" : "Visa inköp"}
-                            >
-                                🛒
-                            </button>
+                            {hasPurchases && (
+                                <button
+                                    type="button"
+                                    onClick={() => onToggleExpand(report.errandId)}
+                                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-base text-slate-700 transition hover:bg-slate-50"
+                                    aria-label={isExpanded ? "Dölj inköp" : "Visa inköp"}
+                                    title={isExpanded ? "Dölj inköp" : "Visa inköp"}
+                                >
+                                    🛒
+                                </button>
+                                )}
 
                             <div className="min-w-0 flex-1">
                                 <div className="truncate text-sm font-semibold text-slate-900">
@@ -184,6 +188,7 @@ export const ReportListRow = ({
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <div className="flex items-start justify-between gap-4">
                             <div className="flex min-w-0 flex-1 items-start gap-3">
+                               {hasPurchases && (
                                 <button
                                     type="button"
                                     onClick={() => onToggleExpand(report.errandId)}
@@ -193,6 +198,7 @@ export const ReportListRow = ({
                                 >
                                     🛒
                                 </button>
+                                )}
 
                                 <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
@@ -319,6 +325,7 @@ export const ReportListRow = ({
                     <div
                         className="grid grid-cols-[56px_72px_minmax(180px,1.6fr)_minmax(110px,0.9fr)_minmax(100px,0.8fr)_110px_80px_100px_130px_120px] items-center gap-3">
                         <div>
+                        {hasPurchases && (
                             <button
                                 type="button"
                                 onClick={() => onToggleExpand(report.errandId)}
@@ -328,6 +335,7 @@ export const ReportListRow = ({
                             >
                                 🛒
                             </button>
+                            )}
                         </div>
 
                         <div className="text-sm font-semibold text-slate-900">

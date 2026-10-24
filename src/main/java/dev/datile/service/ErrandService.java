@@ -25,6 +25,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class ErrandService {
@@ -91,6 +92,12 @@ public class ErrandService {
         final var errands = result.getContent();
         final var ids = errands.stream().map(Errand::getErrandId).toList();
 
+        final Set<Long> errandIdsWithPurchases = ids.isEmpty()
+                ? Set.of()
+                : purchaseRepo.findByErrand_ErrandIdIn(ids).stream()
+                .map(purchase -> purchase.getErrand().getErrandId())
+                .collect(java.util.stream.Collectors.toSet());
+
         final var rows = ids.isEmpty()
                 ? List.<ErrandHistoryRepository.HistoryPreviewRow>of()
                 : historyRepo.findHistoryPreview(ids, 2);
@@ -112,7 +119,8 @@ public class ErrandService {
         final var dtos = errands.stream()
                 .map(errand -> mapper.toListItemDto(
                         errand,
-                        historyMap.getOrDefault(errand.getErrandId(), List.of())
+                        historyMap.getOrDefault(errand.getErrandId(), List.of()),
+                        errandIdsWithPurchases.contains(errand.getErrandId())
                 ))
                 .toList();
 

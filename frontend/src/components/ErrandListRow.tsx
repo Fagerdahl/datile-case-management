@@ -73,9 +73,17 @@ export const ErrandListRow = ({
                                 {safe(errand.title)}
                             </div>
 
-                            <div className="mt-0.5 text-xs text-slate-500">
-                                #{String(errand.errandId).padStart(3, "0")} · {safe(customerName)}
-                            </div>
+                           <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-500">
+                               <span>
+                                   #{String(errand.errandId).padStart(3, "0")} · {safe(customerName)}
+                               </span>
+
+                               {errand.hasPurchases && (
+                                   <span role="img" aria-label="Ärendet har inköp" title="Ärendet har inköp">
+                                       🛒
+                                   </span>
+                               )}
+                           </div>
 
                             <div className="mt-1 text-xs text-slate-400">
                                 Kontakt: {safe(contactName)}
@@ -119,8 +127,14 @@ export const ErrandListRow = ({
                 </div>
 
                 <div className="hidden sm:grid sm:grid-cols-[72px_minmax(0,2.8fr)_minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.1fr)_110px_110px_96px] sm:items-center sm:gap-4">
-                    <div className="text-sm font-semibold text-slate-900">
-                        #{String(errand.errandId).padStart(3, "0")}
+                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                        <span>#{String(errand.errandId).padStart(3, "0")}</span>
+
+                        {errand.hasPurchases && (
+                            <span role="img" aria-label="Ärendet har inköp" title="Ärendet har inköp">
+                                🛒
+                            </span>
+                        )}
                     </div>
 
                     <div className="min-w-0">

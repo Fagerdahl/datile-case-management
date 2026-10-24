@@ -16,7 +16,7 @@ import java.util.List;
 @Component
 public class ErrandMapper {
 
-    public ErrandListItemDto toListItemDto(Errand e, List<HistoryEntryDto> historyPreview) {
+    public ErrandListItemDto toListItemDto(Errand e, List<HistoryEntryDto> historyPreview, boolean hasPurchases) {
         return new ErrandListItemDto(
                 e.getErrandId(),
                 e.getCreatedAt(),
@@ -27,7 +27,8 @@ public class ErrandMapper {
                 historyPreview,
                 toAssigneeDto(e.getAssignee()),
                 toCustomerDto(e.getCustomer()),
-                toContactDto(e.getContact())
+                toContactDto(e.getContact()),
+                hasPurchases
         );
     }
 
