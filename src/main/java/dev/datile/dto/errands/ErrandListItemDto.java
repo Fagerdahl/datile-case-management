@@ -18,6 +18,7 @@ public record ErrandListItemDto(
         List<HistoryEntryDto> historyPreview,
         AssigneeDto assignee,
         CustomerDto customer,
-        ContactDto contact
+        ContactDto contact,
+        boolean hasPurchases
 ) {
 }

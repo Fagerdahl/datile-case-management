@@ -92,6 +92,7 @@ export type ErrandListItem = {
     assignee: ErrandAssignee | null;
     customer: ErrandCustomer | null;
     contact: ErrandContact | null;
+    hasPurchases: boolean;
 };
 
 export type ErrandDetails = {

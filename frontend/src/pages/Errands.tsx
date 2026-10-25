@@ -43,6 +43,7 @@ export default function Errands() {
 
     const [customers, setCustomers] = useState<CustomerLookup[]>([]);
     const [assignees, setAssignees] = useState<ErrandAssignee[]>([]);
+    const [filterOptionsLoaded, setFilterOptionsLoaded] = useState(false);
 
     const [statuses, setStatuses] = useState<StatusLookup[]>([]);
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
@@ -232,7 +233,7 @@ export default function Errands() {
                 const [customerData, assigneeData, statusData] = await Promise.all([
                     fetchCustomerLookups(),
                     fetchAssignees(),
-                    fetchStatuses(), // ✅ add this
+                    fetchStatuses(),
                 ]);
 
                 if (!alive) return;
@@ -240,6 +241,8 @@ export default function Errands() {
                 setCustomers(customerData);
                 setAssignees(assigneeData);
                 setStatuses(statusData);
+                setFilterOptionsLoaded(true);
+
             } catch (e) {
                 if (!alive) return;
                 console.error("Failed to load errand filter options", e);
@@ -254,6 +257,7 @@ export default function Errands() {
     }, []);
 
     useEffect(() => {
+        if (!filterOptionsLoaded) return;
         const allowedStatuses = new Set(errandStatusOptions.map((option) => option.value));
         const allowedPriorities = new Set(errandPriorityOptions.map((option) => option.value));
 
@@ -294,7 +298,7 @@ export default function Errands() {
                 page: 0,
             };
         });
-    }, [customers, assignees]);
+    }, [customers, assignees, filterOptionsLoaded]);
 
     useEffect(() => {
         const timeoutId = window.setTimeout(() => {
@@ -453,14 +457,7 @@ export default function Errands() {
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setFilters((current) => ({
-                                        ...current,
-                                        q: "",
-                                        page: 0,
-                                    }));
-                                    setIsFilterPanelOpen(true);
-                                }}
+                                onClick={() => setIsFilterPanelOpen(true)}
                                 className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
                             >
                                 Visa filter

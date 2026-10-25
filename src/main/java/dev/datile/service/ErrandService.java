@@ -1,3 +1,4 @@
+
 package dev.datile.service;
 
 import dev.datile.domain.Assignee;
@@ -25,6 +26,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class ErrandService {
@@ -91,6 +93,12 @@ public class ErrandService {
         final var errands = result.getContent();
         final var ids = errands.stream().map(Errand::getErrandId).toList();
 
+        final Set<Long> errandIdsWithPurchases = ids.isEmpty()
+                ? Set.of()
+                : purchaseRepo.findByErrand_ErrandIdIn(ids).stream()
+                .map(purchase -> purchase.getErrand().getErrandId())
+                .collect(java.util.stream.Collectors.toSet());
+
         final var rows = ids.isEmpty()
                 ? List.<ErrandHistoryRepository.HistoryPreviewRow>of()
                 : historyRepo.findHistoryPreview(ids, 2);
@@ -112,7 +120,8 @@ public class ErrandService {
         final var dtos = errands.stream()
                 .map(errand -> mapper.toListItemDto(
                         errand,
-                        historyMap.getOrDefault(errand.getErrandId(), List.of())
+                        historyMap.getOrDefault(errand.getErrandId(), List.of()),
+                        errandIdsWithPurchases.contains(errand.getErrandId())
                 ))
                 .toList();
 
@@ -128,7 +137,10 @@ public class ErrandService {
     @Transactional(readOnly = true)
     public ErrandDetailsDto getById(Long id) {
         Errand errand = repo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ärende inte hittat"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Ärende inte hittat"
+                ));
 
         final var history = historyRepo.findFullHistoryByErrandId(id).stream()
                 .map(h -> new HistoryEntryDto(
@@ -162,30 +174,47 @@ public class ErrandService {
     @Transactional
     public ErrandDetailsDto update(Long id, UpdateErrandDto request) {
         Errand errand = repo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ärende inte hittat"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Ärende inte hittat"
+                ));
 
         Status status = statusRepo.findById(request.statusId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ogiltigt statusId"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Ogiltigt statusId"
+                ));
 
         Priority priority = priorityRepo.findById(request.priorityId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ogiltigt priorityId"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Ogiltigt priorityId"
+                ));
 
         Assignee assignee = null;
         if (request.assigneeId() != null) {
             assignee = assigneeRepo.findById(request.assigneeId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ogiltigt assigneeId"));
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Ogiltigt assigneeId"
+                    ));
         }
 
         Customer customer = null;
         if (request.customerId() != null) {
             customer = customerRepo.findById(request.customerId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ogiltigt customerId"));
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Ogiltigt customerId"
+                    ));
         }
 
         Contact contact = null;
         if (request.contactId() != null) {
-            contact = contactRepo.findById(request.contactId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ogiltigt contactId"));
+            contact = findActiveContactForCustomer(
+                    request.contactId(),
+                    customer
+            );
         }
 
         if (request.createdAt() != null) {
@@ -193,14 +222,20 @@ public class ErrandService {
         }
 
         errand.setTitle(request.title().trim());
-        errand.setDescription(request.description() != null ? request.description().trim() : null);
+        errand.setDescription(
+                request.description() != null
+                        ? request.description().trim()
+                        : null
+        );
         errand.setStatus(status);
         errand.setPriority(priority);
         errand.setAssignee(assignee);
         errand.setCustomer(customer);
         errand.setContact(contact);
         errand.setTimeSpent(
-                request.timeSpent() != null ? BigDecimal.valueOf(request.timeSpent()) : null
+                request.timeSpent() != null
+                        ? BigDecimal.valueOf(request.timeSpent())
+                        : null
         );
         errand.setAgreedPrice(request.agreedPrice());
 
@@ -212,19 +247,33 @@ public class ErrandService {
     @Transactional
     public ErrandDetailsDto create(CreateErrandDto request) {
         Status status = statusRepo.findById(request.statusId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ogiltigt statusId"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Ogiltigt statusId"
+                ));
 
         Priority priority = priorityRepo.findById(request.priorityId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ogiltigt priorityId"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Ogiltigt priorityId"
+                ));
 
         Assignee assignee = assigneeRepo.findById(request.assigneeId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ogiltigt assigneeId"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Ogiltigt assigneeId"
+                ));
 
         Customer customer = customerRepo.findById(request.customerId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ogiltigt customerId"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Ogiltigt customerId"
+                ));
 
-        Contact contact = contactRepo.findById(request.contactId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ogiltigt contactId"));
+        Contact contact = findActiveContactForCustomer(
+                request.contactId(),
+                customer
+        );
 
         Instant createdAt = request.createdAt() != null
                 ? request.createdAt()
@@ -232,7 +281,9 @@ public class ErrandService {
 
         Errand errand = new Errand(
                 request.title().trim(),
-                request.description() != null ? request.description().trim() : null,
+                request.description() != null
+                        ? request.description().trim()
+                        : null,
                 status,
                 priority,
                 createdAt
@@ -242,7 +293,9 @@ public class ErrandService {
         errand.setCustomer(customer);
         errand.setContact(contact);
         errand.setTimeSpent(
-                request.timeSpent() != null ? BigDecimal.valueOf(request.timeSpent()) : null
+                request.timeSpent() != null
+                        ? BigDecimal.valueOf(request.timeSpent())
+                        : null
         );
         errand.setAgreedPrice(BigDecimal.valueOf(request.agreedPrice()));
 
@@ -267,9 +320,15 @@ public class ErrandService {
     }
 
     @Transactional
-    public ErrandDetailsDto addHistoryEntry(Long id, AddHistoryEntryDto request) {
+    public ErrandDetailsDto addHistoryEntry(
+            Long id,
+            AddHistoryEntryDto request
+    ) {
         Errand errand = repo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ärende inte hittat"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Ärende inte hittat"
+                ));
 
         ErrandHistoryEntry entry = new ErrandHistoryEntry();
         entry.setErrand(errand);
@@ -302,7 +361,9 @@ public class ErrandService {
     }
 
     private Sort.Direction parseDirection(String sortDir) {
-        return "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        return "asc".equalsIgnoreCase(sortDir)
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
     }
 
     private String mapSortField(String sortBy) {
@@ -310,20 +371,20 @@ public class ErrandService {
             return "createdAt";
         }
 
-    return switch (sortBy.toLowerCase()) {
-        case "date" -> "createdAt";
-        case "title" -> "title";
-        case "timespent" -> "timeSpent";
-        case "customer" -> "customer.name";
-        case "contact" -> "contact.lastName";
-        case "status" -> "status.name";
-        case "priority" -> "priority.name";
-        case "assignee" -> "assignee.name";
-        default -> throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Invalid filter or sorting parameters"
-        );
-    };
+        return switch (sortBy.toLowerCase()) {
+            case "date" -> "createdAt";
+            case "title" -> "title";
+            case "timespent" -> "timeSpent";
+            case "customer" -> "customer.name";
+            case "contact" -> "contact.lastName";
+            case "status" -> "status.name";
+            case "priority" -> "priority.name";
+            case "assignee" -> "assignee.name";
+            default -> throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid filter or sorting parameters"
+            );
+        };
     }
 
     private void validateStatuses(List<String> statuses) {
@@ -372,7 +433,6 @@ public class ErrandService {
 
     @Transactional
     public void bulkUpdateStatus(BulkStatusUpdateDto request) {
-
         if (request.fromStatusId().equals(request.toStatusId())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -382,12 +442,14 @@ public class ErrandService {
 
         Status fromStatus = statusRepo.findById(request.fromStatusId())
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST, "Invalid fromStatusId"
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid fromStatusId"
                 ));
 
         Status toStatus = statusRepo.findById(request.toStatusId())
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST, "Invalid toStatusId"
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid toStatusId"
                 ));
 
         repo.bulkUpdateStatus(fromStatus, toStatus);
@@ -397,11 +459,33 @@ public class ErrandService {
     public long countByStatus(Long fromStatusId) {
         Status fromStatus = statusRepo.findById(fromStatusId)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST, "Invalid fromStatusId"
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid fromStatusId"
                 ));
 
         return repo.count((root, query, cb) ->
                 cb.equal(root.get("status"), fromStatus)
         );
+    }
+
+    private Contact findActiveContactForCustomer(
+            Long contactId,
+            Customer customer
+    ) {
+        Contact contact = contactRepo.findByContactIdAndIsActiveTrue(contactId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Kontakten finns inte eller är inaktiv."
+                ));
+
+        if (customer == null
+                || !contact.getCustomerId().equals(customer.getCustomerId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Kontakten tillhör inte den valda kunden."
+            );
+        }
+
+        return contact;
     }
 }
