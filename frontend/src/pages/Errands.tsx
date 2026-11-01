@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchErrands } from "../api/errandsApi";
@@ -24,7 +25,7 @@ import {
     type ErrandFilters,
     type ErrandsResponse,
 } from "../types/errands";
-import {apiClient} from "../services/apiClient.ts";
+import { apiClient } from "../services/apiClient.ts";
 
 /* React component for an errand page */
 
@@ -71,16 +72,15 @@ export default function Errands() {
         setData((current) => {
             if (!current) return current;
 
-            // 1. update errand
+            // Update the changed errand.
             const updatedErrands = current.errands.map((errand) =>
                 errand.errandId === updatedErrand.errandId
                     ? { ...errand, ...updatedErrand }
                     : errand
             );
 
-            // 2. apply filters AGAIN (this is the missing piece)
+            // Reapply the active filters.
             const filteredErrands = updatedErrands.filter((errand) => {
-                // status (compare NAME)
                 if (
                     filters.statuses.length > 0 &&
                     !filters.statuses.includes(errand.status.name)
@@ -88,7 +88,6 @@ export default function Errands() {
                     return false;
                 }
 
-                // priority (compare NAME)
                 if (
                     filters.priorities.length > 0 &&
                     !filters.priorities.includes(errand.priority.name)
@@ -96,7 +95,6 @@ export default function Errands() {
                     return false;
                 }
 
-                // assignee (compare ID)
                 if (
                     filters.assigneeId &&
                     String(errand.assignee?.assigneeId ?? "") !== filters.assigneeId
@@ -104,7 +102,6 @@ export default function Errands() {
                     return false;
                 }
 
-                // customer (compare ID)
                 if (
                     filters.customerId &&
                     String(errand.customer?.customerId ?? "") !== filters.customerId
@@ -121,9 +118,6 @@ export default function Errands() {
                 totalElements: filteredErrands.length,
             };
         });
-
-        // ❗ OPTIONAL: remove this if you want purely instant UI
-        // await loadErrands();
     };
 
     const getVisiblePages = (): (number | "...")[] => {
@@ -157,68 +151,10 @@ export default function Errands() {
         return pages;
     };
 
-    const handleBulkStatusUpdate = (fromStatusId: number, toStatusId: number) => {
-        setData((current) => {
-            if (!current) return current;
-
-            const updatedErrands = current.errands.map((errand) => {
-                if (errand.status.statusId === fromStatusId) {
-                    return {
-                        ...errand,
-                        status: {
-                            ...errand.status,
-                            statusId: toStatusId,
-                            name:
-                                statuses.find((s) => s.statusId === toStatusId)?.name ??
-                                errand.status.name,
-                        },
-                    };
-                }
-                return errand;
-            });
-
-            // 🔥 reuse SAME filter logic
-            const filteredErrands = updatedErrands.filter((errand) => {
-                if (
-                    filters.statuses.length > 0 &&
-                    !filters.statuses.includes(errand.status.name)
-                ) {
-                    return false;
-                }
-
-                if (
-                    filters.priorities.length > 0 &&
-                    !filters.priorities.includes(errand.priority.name)
-                ) {
-                    return false;
-                }
-
-                if (
-                    filters.assigneeId &&
-                    String(errand.assignee?.assigneeId ?? "") !== filters.assigneeId
-                ) {
-                    return false;
-                }
-
-                if (
-                    filters.customerId &&
-                    String(errand.customer?.customerId ?? "") !== filters.customerId
-                ) {
-                    return false;
-                }
-
-                return true;
-            });
-
-            return {
-                ...current,
-                errands: filteredErrands,
-                totalElements: filteredErrands.length,
-            };
-        });
-
-        // optional background sync (recommended)
-        loadErrands();
+    const handleBulkStatusUpdate = () => {
+        // Reload from the backend instead of changing every visible errand.
+        // Only errands matching the selected date range were updated.
+        void loadErrands();
     };
 
     useEffect(() => {
@@ -258,25 +194,39 @@ export default function Errands() {
 
     useEffect(() => {
         if (!filterOptionsLoaded) return;
-        const allowedStatuses = new Set(errandStatusOptions.map((option) => option.value));
-        const allowedPriorities = new Set(errandPriorityOptions.map((option) => option.value));
+
+        const allowedStatuses = new Set(
+            errandStatusOptions.map((option) => option.value)
+        );
+        const allowedPriorities = new Set(
+            errandPriorityOptions.map((option) => option.value)
+        );
 
         setFilters((current) => {
             const nextCustomerId =
                 current.customerId !== "" &&
-                customers.some((customer) => String(customer.customerId) === current.customerId)
+                customers.some(
+                    (customer) =>
+                        String(customer.customerId) === current.customerId
+                )
                     ? current.customerId
                     : "";
 
             const nextAssigneeId =
                 current.assigneeId !== "" &&
-                assignees.some((assignee) => String(assignee.assigneeId) === current.assigneeId)
+                assignees.some(
+                    (assignee) =>
+                        String(assignee.assigneeId) === current.assigneeId
+                )
                     ? current.assigneeId
                     : "";
 
-            const nextStatuses = current.statuses.filter((status) => allowedStatuses.has(status));
-            const nextPriorities = current.priorities.filter((priority) =>
-                allowedPriorities.has(priority),
+            const nextStatuses = current.statuses.filter(
+                (status) => allowedStatuses.has(status)
+            );
+
+            const nextPriorities = current.priorities.filter(
+                (priority) => allowedPriorities.has(priority)
             );
 
             const hasChanged =
@@ -401,6 +351,7 @@ export default function Errands() {
                             >
                                 Massuppdatera
                             </button>
+
                             <button
                                 type="button"
                                 onClick={() => navigate("/errands/new")}
@@ -484,7 +435,8 @@ export default function Errands() {
 
                 <div className="mb-4 flex items-center justify-between">
                     <p className="text-sm text-slate-500">
-                        {data.totalElements} {data.totalElements === 1 ? "ärende" : "ärenden"}
+                        {data.totalElements}{" "}
+                        {data.totalElements === 1 ? "ärende" : "ärenden"}
                     </p>
                 </div>
 
@@ -563,30 +515,34 @@ export default function Errands() {
                         </button>
 
                         <div className="flex flex-wrap items-center gap-2">
-                            {getVisiblePages().map((item: number | "...", index: number) =>
-                                item === "..." ? (
-                                    <span key={`dots-${index}`} className="px-2 text-slate-500">
-                                        ...
-                                    </span>
-                                ) : (
-                                    <button
-                                        key={item}
-                                        type="button"
-                                        onClick={() =>
-                                            setFilters((current) => ({
-                                                ...current,
-                                                page: item,
-                                            }))
-                                        }
-                                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                                            filters.page === item
-                                                ? "bg-[#022B4F] text-white"
-                                                : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                                        }`}
-                                    >
-                                        {item + 1}
-                                    </button>
-                                ),
+                            {getVisiblePages().map(
+                                (item: number | "...", index: number) =>
+                                    item === "..." ? (
+                                        <span
+                                            key={`dots-${index}`}
+                                            className="px-2 text-slate-500"
+                                        >
+                                            ...
+                                        </span>
+                                    ) : (
+                                        <button
+                                            key={item}
+                                            type="button"
+                                            onClick={() =>
+                                                setFilters((current) => ({
+                                                    ...current,
+                                                    page: item,
+                                                }))
+                                            }
+                                            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                                                filters.page === item
+                                                    ? "bg-[#022B4F] text-white"
+                                                    : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                                            }`}
+                                        >
+                                            {item + 1}
+                                        </button>
+                                    )
                             )}
                         </div>
 
@@ -595,7 +551,10 @@ export default function Errands() {
                             onClick={() =>
                                 setFilters((current) => ({
                                     ...current,
-                                    page: Math.min(totalPages - 1, current.page + 1),
+                                    page: Math.min(
+                                        totalPages - 1,
+                                        current.page + 1
+                                    ),
                                 }))
                             }
                             disabled={filters.page >= totalPages - 1}
@@ -614,147 +573,283 @@ export default function Errands() {
                         onErrandUpdated={handleErrandUpdated}
                     />
                 )}
+
                 {isBulkModalOpen && (
                     <BulkStatusModal
                         statuses={statuses}
                         onClose={() => setIsBulkModalOpen(false)}
-                        onSuccess={({ fromStatusId, toStatusId }) => {
-                            handleBulkStatusUpdate(fromStatusId, toStatusId);
-                        }}
+                        onSuccess={handleBulkStatusUpdate}
                     />
                 )}
             </div>
         </div>
     );
 
-
-
     function BulkStatusModal({
-                                 statuses,
-                                 onClose,
-                                 onSuccess,
-                             }: {
+        statuses,
+        onClose,
+        onSuccess,
+    }: {
         statuses: { statusId: number; name: string }[];
         onClose: () => void;
-        onSuccess: (data: { fromStatusId: number; toStatusId: number }) => void;
+        onSuccess: () => void;
     }) {
         const [fromStatus, setFromStatus] = useState<number | null>(null);
         const [toStatus, setToStatus] = useState<number | null>(null);
+        const [fromDate, setFromDate] = useState("");
+        const [toDate, setToDate] = useState("");
         const [count, setCount] = useState<number | null>(null);
         const [step, setStep] = useState<"select" | "confirm">("select");
-
         const [error, setError] = useState<string | null>(null);
         const [loading, setLoading] = useState(false);
 
-        async function handleCheck() {
+        const hasDateRange = fromDate !== "" && toDate !== "";
+
+        const validate = (): boolean => {
             if (fromStatus == null || toStatus == null) {
-                setError("Välj båda statusar...");
-                return;
+                setError("Välj både frånstatus och tillstatus.");
+                return false;
             }
 
             if (fromStatus === toStatus) {
-                setError("Statusarna måste vara olika...");
-                return;
+                setError("Frånstatus och tillstatus måste vara olika.");
+                return false;
+            }
+
+            if ((fromDate === "") !== (toDate === "")) {
+                setError(
+                    "Ange både från- och tilldatum, eller lämna båda tomma."
+                );
+                return false;
+            }
+
+            if (hasDateRange && toDate < fromDate) {
+                setError("Tilldatum får inte vara före fråndatum.");
+                return false;
             }
 
             setError(null);
+            return true;
+        };
+
+        async function handleCheck() {
+            if (!validate()) return;
+
             setLoading(true);
 
             try {
                 const res = await apiClient.get<number>(
-                    `/api/errands/bulk-status/count`,
-                    { params: { fromStatusId: fromStatus } }
+                    "/api/errands/bulk-status/count",
+                    {
+                        params: {
+                            fromStatusId: fromStatus,
+                            ...(hasDateRange ? { fromDate, toDate } : {}),
+                        },
+                    }
                 );
 
                 setCount(res);
                 setStep("confirm");
             } catch {
-                setError("Kunde inte hämta antal...");
+                setError(
+                    "Kunde inte hämta antalet ärenden. Försök igen."
+                );
             } finally {
                 setLoading(false);
             }
         }
 
         async function handleConfirm() {
+            if (!validate() || count === null || count === 0) return;
+
             setLoading(true);
 
             try {
                 await apiClient.put("/api/errands/bulk-status", {
                     fromStatusId: fromStatus,
                     toStatusId: toStatus,
+                    ...(hasDateRange ? { fromDate, toDate } : {}),
                 });
 
-                if (fromStatus != null && toStatus != null) {
-                    onSuccess({
-                        fromStatusId: fromStatus,
-                        toStatusId: toStatus,
-                    });
-                }
+                onSuccess();
                 onClose();
             } catch {
-                setError("Kunde inte uppdatera...");
+                setError(
+                    "Kunde inte uppdatera ärendena. Försök igen."
+                );
             } finally {
                 setLoading(false);
             }
         }
 
         return (
-            <div className="fixed inset-0 flex items-center justify-center bg-black/30">
-                <div className="w-[420px] rounded-[28px] bg-white p-6 shadow-xl">
-
-                    {/* HEADER */}
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-semibold">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="bulk-status-title"
+                    className="w-full max-w-[440px] rounded-[28px] bg-white p-6 shadow-xl"
+                >
+                    <div className="mb-6 flex items-center justify-between">
+                        <h2
+                            id="bulk-status-title"
+                            className="text-lg font-semibold"
+                        >
                             Massuppdatera status
                         </h2>
-                        <button onClick={onClose}>✕</button>
+
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            disabled={loading}
+                            aria-label="Stäng"
+                            className="rounded-full px-2 py-1 text-slate-600 hover:bg-slate-100"
+                        >
+                            ✕
+                        </button>
                     </div>
 
                     {step === "select" && (
                         <div className="space-y-4">
+                            {error && (
+                                <p
+                                    role="alert"
+                                    className="text-xs font-semibold text-red-600"
+                                >
+                                    {error}
+                                </p>
+                            )}
 
-                            <p className="text-red-600 text-xs font-semibold">{error}</p>
-
-                            {/* FROM */}
                             <div>
-                                <label className="text-sm text-slate-600">Från</label>
+                                <label
+                                    htmlFor="bulk-from-status"
+                                    className="text-sm text-slate-600"
+                                >
+                                    Från status
+                                </label>
+
                                 <select
+                                    id="bulk-from-status"
                                     value={fromStatus ?? ""}
-                                    onChange={(e) => setFromStatus(Number(e.target.value))}
-                                    className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                                    onChange={(e) =>
+                                        setFromStatus(
+                                            e.target.value === ""
+                                                ? null
+                                                : Number(e.target.value)
+                                        )
+                                    }
+                                    className="mt-1 w-full rounded-full border border-slate-300 px-3 py-2 text-sm"
                                 >
                                     <option value="">Välj...</option>
-                                    {statuses.map((s) => (
-                                        <option key={s.statusId} value={s.statusId}>
-                                            {s.name}
+
+                                    {statuses.map((status) => (
+                                        <option
+                                            key={status.statusId}
+                                            value={status.statusId}
+                                        >
+                                            {status.name}
                                         </option>
                                     ))}
                                 </select>
                             </div>
 
-                            {/* TO */}
                             <div>
-                                <label className="text-sm text-slate-600">Till</label>
+                                <label
+                                    htmlFor="bulk-to-status"
+                                    className="text-sm text-slate-600"
+                                >
+                                    Till status
+                                </label>
+
                                 <select
+                                    id="bulk-to-status"
                                     value={toStatus ?? ""}
-                                    onChange={(e) => setToStatus(Number(e.target.value))}
-                                    className="mt-1 w-full rounded-full border px-3 py-2 text-sm"
+                                    onChange={(e) =>
+                                        setToStatus(
+                                            e.target.value === ""
+                                                ? null
+                                                : Number(e.target.value)
+                                        )
+                                    }
+                                    className="mt-1 w-full rounded-full border border-slate-300 px-3 py-2 text-sm"
                                 >
                                     <option value="">Välj...</option>
+
                                     {statuses
-                                        .filter((s) => s.statusId !== fromStatus)
-                                        .map((s) => (
-                                            <option key={s.statusId} value={s.statusId}>
-                                                {s.name}
+                                        .filter(
+                                            (status) =>
+                                                status.statusId !== fromStatus
+                                        )
+                                        .map((status) => (
+                                            <option
+                                                key={status.statusId}
+                                                value={status.statusId}
+                                            >
+                                                {status.name}
                                             </option>
                                         ))}
                                 </select>
                             </div>
 
+                            <fieldset className="space-y-3 rounded-2xl border border-slate-200 p-4">
+                                <legend className="px-1 text-sm font-semibold text-slate-800">
+                                    Datumspann (valfritt)
+                                </legend>
+
+                                <p className="text-xs text-slate-500">
+                                    Filtrera på ärendets datum. Lämna båda
+                                    tomma för att uppdatera alla ärenden med
+                                    vald status.
+                                </p>
+
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <label
+                                            htmlFor="bulk-from-date"
+                                            className="text-sm text-slate-600"
+                                        >
+                                            Från datum
+                                        </label>
+
+                                        <input
+                                            id="bulk-from-date"
+                                            type="date"
+                                            value={fromDate}
+                                            max={toDate || undefined}
+                                            onChange={(e) =>
+                                                setFromDate(e.target.value)
+                                            }
+                                            className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label
+                                            htmlFor="bulk-to-date"
+                                            className="text-sm text-slate-600"
+                                        >
+                                            Till datum
+                                        </label>
+
+                                        <input
+                                            id="bulk-to-date"
+                                            type="date"
+                                            value={toDate}
+                                            min={fromDate || undefined}
+                                            onChange={(e) =>
+                                                setToDate(e.target.value)
+                                            }
+                                            className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                                        />
+                                    </div>
+                                </div>
+                            </fieldset>
+
                             <button
-                                onClick={handleCheck}
+                                type="button"
+                                onClick={() => void handleCheck()}
                                 disabled={loading}
-                                className="w-full rounded-full bg-[#0A1633] py-2 text-white font-semibold hover:bg-[#13224A]"
+                                className="w-full rounded-full bg-[#0A1633] py-2 font-semibold text-white hover:bg-[#13224A] disabled:opacity-50"
                             >
                                 {loading ? "Kontrollerar..." : "Fortsätt"}
                             </button>
@@ -763,6 +858,14 @@ export default function Errands() {
 
                     {step === "confirm" && (
                         <div className="space-y-5 text-center">
+                            {error && (
+                                <p
+                                    role="alert"
+                                    className="text-xs font-semibold text-red-600"
+                                >
+                                    {error}
+                                </p>
+                            )}
 
                             <p className="text-sm text-slate-600">
                                 Detta kommer att uppdatera
@@ -776,18 +879,46 @@ export default function Errands() {
                                 ärenden
                             </p>
 
+                            {hasDateRange && (
+                                <p className="text-sm text-slate-600">
+                                    Med ärendedatum från {fromDate} till{" "}
+                                    {toDate} (inklusive).
+                                </p>
+                            )}
+
+                            {count === 0 && (
+                                <p className="text-sm text-amber-700">
+                                    Inga ärenden matchar urvalet.
+                                </p>
+                            )}
+
+                            <p className="text-xs text-slate-500">
+                                Antalet kan förändras om ärenden ändras
+                                innan du bekräftar.
+                            </p>
+
                             <div className="flex gap-3">
                                 <button
-                                    onClick={() => setStep("select")}
+                                    type="button"
+                                    onClick={() => {
+                                        setError(null);
+                                        setStep("select");
+                                    }}
+                                    disabled={loading}
                                     className="w-full rounded-full border border-slate-300 py-2 text-sm font-semibold"
                                 >
                                     Tillbaka
                                 </button>
 
                                 <button
-                                    onClick={handleConfirm}
-                                    disabled={loading}
-                                    className="w-full rounded-full bg-[#0A1633] py-2 text-white font-semibold hover:bg-[#13224A]"
+                                    type="button"
+                                    onClick={() => void handleConfirm()}
+                                    disabled={
+                                        loading ||
+                                        count === null ||
+                                        count === 0
+                                    }
+                                    className="w-full rounded-full bg-[#0A1633] py-2 font-semibold text-white hover:bg-[#13224A] disabled:opacity-50"
                                 >
                                     {loading ? "Uppdaterar..." : "Bekräfta"}
                                 </button>
