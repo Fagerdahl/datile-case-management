@@ -24,12 +24,16 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 @Service
 public class ErrandService {
+
+    private static final ZoneId BULK_UPDATE_ZONE = ZoneId.of("Europe/Stockholm");
 
     private final ErrandHistoryRepository historyRepo;
     private final ErrandRepository repo;
@@ -91,7 +95,9 @@ public class ErrandService {
         final var result = repo.findAll(spec, pageable);
 
         final var errands = result.getContent();
-        final var ids = errands.stream().map(Errand::getErrandId).toList();
+        final var ids = errands.stream()
+                .map(Errand::getErrandId)
+                .toList();
 
         final Set<Long> errandIdsWithPurchases = ids.isEmpty()
                 ? Set.of()
@@ -192,6 +198,7 @@ public class ErrandService {
                 ));
 
         Assignee assignee = null;
+
         if (request.assigneeId() != null) {
             assignee = assigneeRepo.findById(request.assigneeId())
                     .orElseThrow(() -> new ResponseStatusException(
@@ -201,6 +208,7 @@ public class ErrandService {
         }
 
         Customer customer = null;
+
         if (request.customerId() != null) {
             customer = customerRepo.findById(request.customerId())
                     .orElseThrow(() -> new ResponseStatusException(
@@ -210,6 +218,7 @@ public class ErrandService {
         }
 
         Contact contact = null;
+
         if (request.contactId() != null) {
             contact = findActiveContactForCustomer(
                     request.contactId(),
@@ -222,21 +231,25 @@ public class ErrandService {
         }
 
         errand.setTitle(request.title().trim());
+
         errand.setDescription(
                 request.description() != null
                         ? request.description().trim()
                         : null
         );
+
         errand.setStatus(status);
         errand.setPriority(priority);
         errand.setAssignee(assignee);
         errand.setCustomer(customer);
         errand.setContact(contact);
+
         errand.setTimeSpent(
                 request.timeSpent() != null
                         ? BigDecimal.valueOf(request.timeSpent())
                         : null
         );
+
         errand.setAgreedPrice(request.agreedPrice());
 
         repo.save(errand);
@@ -292,11 +305,13 @@ public class ErrandService {
         errand.setAssignee(assignee);
         errand.setCustomer(customer);
         errand.setContact(contact);
+
         errand.setTimeSpent(
                 request.timeSpent() != null
                         ? BigDecimal.valueOf(request.timeSpent())
                         : null
         );
+
         errand.setAgreedPrice(BigDecimal.valueOf(request.agreedPrice()));
 
         Errand savedErrand = repo.save(errand);
@@ -431,14 +446,65 @@ public class ErrandService {
         }
     }
 
+    // Date range for bulk status updates.
+    // Start date is inclusive, end date is inclusive at calendar-day level.
+    // Both boundaries are converted to Instants in Swedish local time.
+
+    private record DateRange(
+            Instant startInclusive,
+            Instant endExclusive
+    ) {}
+
+    private DateRange resolveDateRange(
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
+        if (fromDate == null && toDate == null) {
+            return null;
+        }
+
+        if (fromDate == null || toDate == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Både från- och tilldatum måste anges."
+            );
+        }
+
+        if (toDate.isBefore(fromDate)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Tilldatum får inte vara före fråndatum."
+            );
+        }
+
+        return new DateRange(
+                fromDate.atStartOfDay(BULK_UPDATE_ZONE).toInstant(),
+                toDate.plusDays(1).atStartOfDay(BULK_UPDATE_ZONE).toInstant()
+        );
+    }
+
     @Transactional
     public void bulkUpdateStatus(BulkStatusUpdateDto request) {
+        if (request == null
+                || request.fromStatusId() == null
+                || request.toStatusId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Båda statusarna måste anges."
+            );
+        }
+
         if (request.fromStatusId().equals(request.toStatusId())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "fromStatusId and toStatusId cannot be the same"
             );
         }
+
+        DateRange range = resolveDateRange(
+                request.fromDate(),
+                request.toDate()
+        );
 
         Status fromStatus = statusRepo.findById(request.fromStatusId())
                 .orElseThrow(() -> new ResponseStatusException(
@@ -452,20 +518,66 @@ public class ErrandService {
                         "Invalid toStatusId"
                 ));
 
-        repo.bulkUpdateStatus(fromStatus, toStatus);
+        if (range == null) {
+            repo.bulkUpdateStatus(fromStatus, toStatus);
+        } else {
+            repo.bulkUpdateStatusWithinDateRange(
+                    fromStatus,
+                    toStatus,
+                    range.startInclusive(),
+                    range.endExclusive()
+            );
+        }
     }
 
     @Transactional(readOnly = true)
     public long countByStatus(Long fromStatusId) {
+        return countByStatus(fromStatusId, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public long countByStatus(
+            Long fromStatusId,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
+        if (fromStatusId == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Frånstatus måste anges."
+            );
+        }
+
+        DateRange range = resolveDateRange(fromDate, toDate);
+
         Status fromStatus = statusRepo.findById(fromStatusId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "Invalid fromStatusId"
                 ));
 
-        return repo.count((root, query, cb) ->
-                cb.equal(root.get("status"), fromStatus)
-        );
+        return repo.count((root, query, cb) -> {
+            var statusPredicate = cb.equal(
+                    root.get("status"),
+                    fromStatus
+            );
+
+            if (range == null) {
+                return statusPredicate;
+            }
+
+            return cb.and(
+                    statusPredicate,
+                    cb.greaterThanOrEqualTo(
+                            root.<Instant>get("createdAt"),
+                            range.startInclusive()
+                    ),
+                    cb.lessThan(
+                            root.<Instant>get("createdAt"),
+                            range.endExclusive()
+                    )
+            );
+        });
     }
 
     private Contact findActiveContactForCustomer(

@@ -66,7 +66,7 @@ public class ReportQueryServiceImpl implements ReportQueryService {
         if (effectiveFrom.isAfter(effectiveTo)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "dateFrom must be before or equal to dateTo"
+                    "Fråndatum måste vara före eller samma som tilldatum"
             );
         }
 
@@ -121,7 +121,7 @@ public class ReportQueryServiceImpl implements ReportQueryService {
         if (effectiveFrom.isAfter(effectiveTo)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "dateFrom must be before or equal to dateTo"
+                    "Fråndatum måste vara före eller samma som tilldatum"
             );
         }
 

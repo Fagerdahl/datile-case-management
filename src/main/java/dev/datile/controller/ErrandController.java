@@ -1,3 +1,4 @@
+
 package dev.datile.controller;
 
 import dev.datile.dto.errands.*;
@@ -5,6 +6,8 @@ import dev.datile.service.ErrandService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 /* Everything in this class is API routes under /api/errands
  * @GetMapping means: when someone does GET /api/errands -> run this method
@@ -77,7 +80,7 @@ public class ErrandController {
 
     @PutMapping("/bulk-status")
     public ResponseEntity<Void> bulkUpdateStatus(
-            @RequestBody BulkStatusUpdateDto request
+            @Valid @RequestBody BulkStatusUpdateDto request
     ) {
         service.bulkUpdateStatus(request);
         return ResponseEntity.noContent().build();
@@ -85,8 +88,12 @@ public class ErrandController {
 
     @GetMapping("/bulk-status/count")
     public ResponseEntity<Long> countBulkUpdate(
-            @RequestParam Long fromStatusId
+            @RequestParam Long fromStatusId,
+            @RequestParam(required = false) LocalDate fromDate,
+            @RequestParam(required = false) LocalDate toDate
     ) {
-        return ResponseEntity.ok(service.countByStatus(fromStatusId));
+        return ResponseEntity.ok(
+                service.countByStatus(fromStatusId, fromDate, toDate)
+        );
     }
 }
